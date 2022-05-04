@@ -23,14 +23,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import re
 
 import wx
 
-from graphics.FBD_Objects import FBD_Block
 from controls.LibraryPanel import LibraryPanel
 from dialogs.BlockPreviewDialog import BlockPreviewDialog
+from graphics.FBD_Objects import FBD_Block
+
 
 # -------------------------------------------------------------------------------
 #                                    Helpers
@@ -58,8 +58,8 @@ class FBDBlockDialog(BlockPreviewDialog):
         @param controller: Reference to project controller
         @param tagname: Tagname of project POU edited
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Block Properties'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Block Properties'))
 
         # Init common sizers
         self._init_sizers(2, 0, 1, 0, 3, 2)
@@ -67,8 +67,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         # Create static box around library panel
         type_staticbox = wx.StaticBox(self, label=_('Type:'))
         left_staticboxsizer = wx.StaticBoxSizer(type_staticbox, wx.VERTICAL)
-        self.LeftGridSizer.Add(
-            left_staticboxsizer, border=5, flag=wx.GROW)
+        self.LeftGridSizer.Add(left_staticboxsizer, border=5, flag=wx.GROW)
 
         # Create Library panel and add it to static box
         self.LibraryPanel = LibraryPanel(self)
@@ -78,7 +77,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         setattr(self.LibraryPanel, "_OnTreeItemSelected",
                 self.OnLibraryTreeItemSelected)
         left_staticboxsizer.Add(self.LibraryPanel, 1, border=5,
-                                      flag=wx.GROW | wx.TOP)
+                                flag=wx.GROW | wx.TOP)
 
         # Create sizer for other block parameters
         top_right_gridsizer = wx.FlexGridSizer(cols=2, hgap=0, rows=4, vgap=5)
@@ -88,7 +87,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         # Create label for block name
         name_label = wx.StaticText(self, label=_('Name:'))
         top_right_gridsizer.Add(name_label,
-                                      flag=wx.ALIGN_CENTER_VERTICAL)
+                                flag=wx.ALIGN_CENTER_VERTICAL)
 
         # Create text control for defining block name
         self.BlockName = wx.TextCtrl(self)
@@ -98,7 +97,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         # Create label for extended block input number
         inputs_label = wx.StaticText(self, label=_('Inputs:'))
         top_right_gridsizer.Add(inputs_label,
-                                      flag=wx.ALIGN_CENTER_VERTICAL)
+                                flag=wx.ALIGN_CENTER_VERTICAL)
 
         # Create spin control for defining extended block input number
         self.Inputs = wx.SpinCtrl(self, min=2, max=20,
@@ -110,7 +109,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         execution_order_label = wx.StaticText(self,
                                               label=_('Execution Order:'))
         top_right_gridsizer.Add(execution_order_label,
-                                      flag=wx.ALIGN_CENTER_VERTICAL)
+                                flag=wx.ALIGN_CENTER_VERTICAL)
 
         # Create spin control for defining block execution order
         self.ExecutionOrder = wx.SpinCtrl(self, min=0, style=wx.SP_ARROW_KEYS)
@@ -122,7 +121,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         execution_control_label = wx.StaticText(self,
                                                 label=_('Execution Control:'))
         top_right_gridsizer.Add(execution_control_label,
-                                      flag=wx.ALIGN_CENTER_VERTICAL)
+                                flag=wx.ALIGN_CENTER_VERTICAL)
 
         # Create check box to enable block execution control
         self.ExecutionControl = wx.CheckBox(self)
@@ -136,7 +135,7 @@ class FBDBlockDialog(BlockPreviewDialog):
 
         # Add buttons sizer to sizers
         self.MainSizer.Add(self.ButtonSizer, border=20,
-                                flag=wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT)
+                           flag=wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT)
 
         # Dictionary containing correspondence between parameter exchanged and
         # control to fill with parameter value
@@ -232,8 +231,7 @@ class FBDBlockDialog(BlockPreviewDialog):
 
         # Test that a type has been selected for block
         if selected is None:
-            message = _(
-                "Form isn't complete. Valid block type must be selected!")
+            message = _("Form isn't complete. Valid block type must be selected!")
 
         # Test, if block is a function block, that a name have been defined
         elif name_enabled and block_name == "":
@@ -278,8 +276,7 @@ class FBDBlockDialog(BlockPreviewDialog):
                 # Generate new block name according to block type, taking
                 # default element name if it was already a default name for this
                 # block type
-                default_name_model = GetBlockTypeDefaultNameModel(
-                    values["type"])
+                default_name_model = GetBlockTypeDefaultNameModel(values["type"])
                 block_name = (
                     self.DefaultElementName
                     if (self.DefaultElementName is not None and
@@ -333,7 +330,7 @@ class FBDBlockDialog(BlockPreviewDialog):
         self.RefreshPreview()
         event.Skip()
 
-    def RefreshPreview(self):
+    def DrawPreview(self):
         """
         Refresh preview panel of graphic element
         Override BlockPreviewDialog function
@@ -357,4 +354,4 @@ class FBDBlockDialog(BlockPreviewDialog):
             self.Element = None
 
         # Call BlockPreviewDialog function
-        BlockPreviewDialog.RefreshPreview(self)
+        BlockPreviewDialog.DrawPreview(self)

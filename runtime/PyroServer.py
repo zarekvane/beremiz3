@@ -9,17 +9,20 @@
 
 # See COPYING file for copyrights details.
 
+# 
 
 
+import os
 import sys
 
 import Pyro
 import Pyro.core as pyro
+
 import runtime
 from runtime.ServicePublisher import ServicePublisher
 
 
-class PyroServer:
+class PyroServer(object):
     def __init__(self, servicename, ip_addr, port):
         self.continueloop = True
         self.daemon = None
@@ -27,6 +30,7 @@ class PyroServer:
         self.ip_addr = ip_addr
         self.port = port
         self.servicepublisher = None
+        self.piper, self.pipew = None, None
 
     def _to_be_published(self):
         return self.servicename is not None and \
@@ -60,8 +64,11 @@ class PyroServer:
             self.daemon.connect(pyro_obj, "PLCObject")
 
             when_ready()
-            self.daemon.requestLoop()
-            self.daemon.sock.close()
+            self.piper,self.pipew = os.pipe()
+            self.daemon.requestLoop(others=[self.piper], callback=lambda x:None)
+            self.piper, self.pipew = None, None
+            if hasattr(self,'sock'):
+                self.daemon.sock.close()
         self.Unpublish()
 
     def Restart(self):
@@ -70,6 +77,9 @@ class PyroServer:
     def Quit(self):
         self.continueloop = False
         self.daemon.shutdown(True)
+        self.daemon.closedown()
+        if self.pipew is not None:
+            os.write(self.pipew, "goodbye")
 
     def Publish(self):
         self.servicepublisher = ServicePublisher("PYRO")

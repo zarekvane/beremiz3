@@ -24,16 +24,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+# 
 import os
 import shutil
 
 import wx
-from svgui.pyjs import translate
 
 import util.paths as paths
 from POULibrary import POULibrary
 from docutil import open_svg
 from py_ext import PythonFileCTNMixin
+from svgui.pyjs import translate
 
 
 class SVGUILibrary(POULibrary):
@@ -99,27 +100,21 @@ class SVGUI(PythonFileCTNMixin):
         svguiserverfile.close()
 
         svguilibpath = os.path.join(self._getBuildPath(), "svguilib.js")
-        svguilibfile = open(svguilibpath, 'w')
+        svguilibfile = open(svguilibpath, 'w', encoding='utf-8')
         fpath = paths.AbsDir(__file__)
-        svguilibfile.write(translate(os.path.join(
-            fpath, "pyjs", "lib", "sys.py"), "sys"))
-        svguilibfile.write(
-            open(os.path.join(fpath, "pyjs", "lib", "_pyjs.js"), 'r').read())
-        svguilibfile.write(translate(os.path.join(
-            fpath, "pyjs", "lib", "pyjslib.py"), "pyjslib"))
-        svguilibfile.write(
-            translate(os.path.join(fpath, "svguilib.py"), "svguilib"))
+        svguilibfile.write(translate(os.path.join(fpath, "pyjs", "lib", "sys.py"), "sys"))
+        svguilibfile.write(open(os.path.join(fpath, "pyjs", "lib", "_pyjs.js"), 'r').read())
+        svguilibfile.write(translate(os.path.join(fpath, "pyjs", "lib", "pyjslib.py"), "pyjslib"))
+        svguilibfile.write(translate(os.path.join(fpath, "svguilib.py"), "svguilib"))
         svguilibfile.write("pyjslib();\nsvguilib();\n")
-        svguilibfile.write(
-            open(os.path.join(fpath, "pyjs", "lib", "json.js"), 'r').read())
+        svguilibfile.write(open(os.path.join(fpath, "pyjs", "lib", "json.js"), 'r').read())
         svguilibfile.write(open(os.path.join(fpath, "livesvg.js"), 'r').read())
         svguilibfile.close()
         jsmodules = {"LiveSVGPage": "svguilib.js"}
         res += (("svguilib.js", open(svguilibpath, "rb")),)
 
-        runtimefile_path = os.path.join(
-            buildpath, "runtime_%s.py" % location_str)
-        runtimefile = open(runtimefile_path, 'w')
+        runtimefile_path = os.path.join(buildpath, "runtime_%s.py" % location_str)
+        runtimefile = open(runtimefile_path, 'w', encoding='utf-8')
         runtimefile.write(svguiservercode % {"svgfile": "gui.svg"})
         runtimefile.write("""
 def _runtime_%(location)s_start():
@@ -133,18 +128,12 @@ def _runtime_%(location)s_stop():
                "jsmodules": str(jsmodules)})
         runtimefile.close()
 
-        res += (("runtime_%s.py" % location_str, open(runtimefile_path, "rb")),)
+        res += (("runtime_%s.py" % location_str, open(runtimefile_path, "rb")),), []
 
         return res
 
     def _ImportSVG(self):
-        dialog = wx.FileDialog(self.GetCTRoot().AppFrame,
-                               _("Choose a SVG file"),
-                               os.getcwd(),
-                               "",
-                               _("SVG files (*.svg)|*.svg|All files|*.*"),
-                               wx.OPEN)
-
+        dialog = wx.FileDialog(self.GetCTRoot().AppFrame, _("Choose a SVG file"), os.getcwd(), "",  _("SVG files (*.svg)|*.svg|All files|*.*"), wx.OPEN)
         if dialog.ShowModal() == wx.ID_OK:
             svgpath = dialog.GetPath()
             if os.path.isfile(svgpath):
@@ -163,7 +152,6 @@ def _runtime_%(location)s_stop():
                                       wx.YES_NO | wx.ICON_QUESTION)
             open_inkscape = dialog.ShowModal() == wx.ID_YES
             dialog.Destroy()
-
         if open_inkscape:
             if not os.path.isfile(svgfile):
                 svgfile = None

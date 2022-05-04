@@ -8,23 +8,25 @@
 # See COPYING file for copyrights details.
 
 
+
+
 import os
 import string
 from xml.dom import minidom
 
 import wx
-import wx.grid
 import wx.gizmos
+import wx.grid
+import wx.lib.buttons
 
 # --------------------------------------------------------------------
 from controls import CustomGrid, CustomTable
 from runtime import PlcStatus
-# --------------------------------------------------------------------
-
-# ------------ for register management ---------------
-
 from util.TranslationCatalogs import NoTranslate
-import wxpatch
+
+
+# --------------------------------------------------------------------
+# ------------ for register management ---------------
 # -------------------------------------------------------------
 
 
@@ -59,7 +61,7 @@ class EtherCATManagementTreebook(wx.Treebook):
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         @param node_editor: Reference to Beremiz frame
         """
-        super().__init__(parent, -1, size=wx.DefaultSize, style=wx.BK_DEFAULT)
+        wx.Treebook.__init__(self, parent, -1, size=wx.DefaultSize, style=wx.BK_DEFAULT)
         self.parent = parent
         self.Controler = controler
         self.NodeEditor = node_editor
@@ -92,7 +94,7 @@ class SlaveStatePanelClass(wx.Panel):
         @param parent: Reference to the parent EtherCATManagementTreebook class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1, (0, 0), size=wx.DefaultSize, style=wx.SUNKEN_BORDER)
+        wx.Panel.__init__(self, parent, -1, (0, 0), size=wx.DefaultSize, style=wx.SUNKEN_BORDER)
         self.Controler = controler
         self.parent = parent
 
@@ -117,68 +119,52 @@ class SlaveStatePanelClass(wx.Panel):
                 ("SlaveInfosDetailsBox", "Slave Informations"),
                 ("SyncManagerBox", "Sync Manager"),
                 ("SlaveStateBox", "Slave State Transition && Monitoring")]:
-            self.StaticBoxDic[box_name] = wx.StaticBox(
-                self, label=_(box_label))
-            self.SizerDic[box_name] = wx.StaticBoxSizer(
-                self.StaticBoxDic[box_name])
+            self.StaticBoxDic[box_name] = wx.StaticBox(self, label=_(box_label))
+            self.SizerDic[box_name] = wx.StaticBoxSizer(self.StaticBoxDic[box_name])
 
         for statictext_name, statictext_label, textctrl_name in [
                 ("VendorLabel", "Vendor:", "vendor"),
                 ("ProductcodeLabel", "Product code:", "product_code"),
                 ("RevisionnumberLabel", "Slave Count:", "revision_number"),
                 ("PhysicsLabel", "Physics:", "physics")]:
-            self.StaticTextDic[statictext_name] = wx.StaticText(
-                self, label=_(statictext_label))
-            self.TextCtrlDic[textctrl_name] = wx.TextCtrl(
-                self, size=wx.Size(130, 24), style=wx.TE_READONLY)
+            self.StaticTextDic[statictext_name] = wx.StaticText(self, label=_(statictext_label))
+            self.TextCtrlDic[textctrl_name] = wx.TextCtrl(self, size=wx.Size(130, 24), style=wx.TE_READONLY)
             self.SizerDic["SlaveInfosDetailsInnerSizer"].AddMany([self.StaticTextDic[statictext_name],
                                                                   self.TextCtrlDic[textctrl_name]])
 
-        self.SizerDic["SlaveInfosDetailsBox"].Add(
-            self.SizerDic["SlaveInfosDetailsInnerSizer"])
+        self.SizerDic["SlaveInfosDetailsBox"].AddSizer(self.SizerDic["SlaveInfosDetailsInnerSizer"])
 
-        self.SyncManagersGrid = CustomGrid(
-            self, size=wx.Size(605, 155), style=wx.VSCROLL)
+        self.SyncManagersGrid = CustomGrid(self, size=wx.Size(605, 155), style=wx.VSCROLL)
 
         self.SizerDic["SyncManagerInnerSizer"].Add(self.SyncManagersGrid)
-        self.SizerDic["SyncManagerBox"].Add(
-            self.SizerDic["SyncManagerInnerSizer"])
+        self.SizerDic["SyncManagerBox"].Add(self.SizerDic["SyncManagerInnerSizer"])
 
         buttons = [
-            ("InitButton",   0, "INIT",
-             "State Transition to \"Init\" State",     self.OnButtonClick, []),
+            ("InitButton",   0, "INIT", "State Transition to \"Init\" State",     self.OnButtonClick, []),
             ("PreOPButton",  1, "PREOP", "State Transition to \"PreOP\" State",   self.OnButtonClick, [
                 ("TargetStateLabel", "Target State:", "TargetState")]),
-            ("SafeOPButton", 2, "SAFEOP",
-             "State Transition to \"SafeOP\" State", self.OnButtonClick, []),
+            ("SafeOPButton", 2, "SAFEOP", "State Transition to \"SafeOP\" State", self.OnButtonClick, []),
             ("OPButton",     3, "OP",  "State Transition to \"OP\" State",        self.OnButtonClick, [
                 ("CurrentStateLabel", "Current State:", "CurrentState")])
         ]
         for button_name, button_id, button_label, button_tooltipstring, event_method, sub_item in buttons:
-            self.ButtonDic[button_name] = wx.Button(
-                self, id=button_id, label=_(button_label))
+            self.ButtonDic[button_name] = wx.Button(self, id=button_id, label=_(button_label))
             self.ButtonDic[button_name].Bind(wx.EVT_BUTTON, event_method)
             self.ButtonDic[button_name].SetToolTip(button_tooltipstring)
-            self.SizerDic["SlaveState_up_sizer"].Add(
-                self.ButtonDic[button_name])
+            self.SizerDic["SlaveState_up_sizer"].Add(self.ButtonDic[button_name])
             for statictext_name, statictext_label, textctrl_name in sub_item:
-                self.StaticTextDic[statictext_name] = wx.StaticText(
-                    self, label=_(statictext_label))
-                self.TextCtrlDic[textctrl_name] = wx.TextCtrl(
-                    self, size=wx.DefaultSize, style=wx.TE_READONLY)
+                self.StaticTextDic[statictext_name] = wx.StaticText(self, label=_(statictext_label))
+                self.TextCtrlDic[textctrl_name] = wx.TextCtrl(self, size=wx.DefaultSize, style=wx.TE_READONLY)
                 self.SizerDic["SlaveState_up_sizer"].AddMany([self.StaticTextDic[statictext_name],
                                                               self.TextCtrlDic[textctrl_name]])
 
         for button_name, button_label, button_tooltipstring, event_method in [
-                ("StartTimerButton", "Start State Monitoring",
-                 "Slave State Update Restart", self.StartTimer),
+                ("StartTimerButton", "Start State Monitoring", "Slave State Update Restart", self.StartTimer),
                 ("StopTimerButton", "Stop State Monitoring", "Slave State Update Stop", self.CurrentStateThreadStop)]:
-            self.ButtonDic[button_name] = wx.Button(
-                self, label=_(button_label))
+            self.ButtonDic[button_name] = wx.Button(self, label=_(button_label))
             self.ButtonDic[button_name].Bind(wx.EVT_BUTTON, event_method)
             self.ButtonDic[button_name].SetToolTip(button_tooltipstring)
-            self.SizerDic["SlaveState_down_sizer"].Add(
-                self.ButtonDic[button_name])
+            self.SizerDic["SlaveState_down_sizer"].Add(self.ButtonDic[button_name])
 
         self.SizerDic["SlaveState_sizer"].AddMany([self.SizerDic["SlaveState_up_sizer"],
                                                    self.SizerDic["SlaveState_down_sizer"]])
@@ -189,8 +175,7 @@ class SlaveStatePanelClass(wx.Panel):
             self.SizerDic["SlaveInfosDetailsBox"], self.SizerDic["SyncManagerBox"],
             self.SizerDic["SlaveStateBox"]])
 
-        self.SizerDic["SlaveState_main_sizer"].Add(
-            self.SizerDic["SlaveState_inner_main_sizer"])
+        self.SizerDic["SlaveState_main_sizer"].Add(self.SizerDic["SlaveState_inner_main_sizer"])
 
         self.SetSizer(self.SizerDic["SlaveState_main_sizer"])
 
@@ -206,8 +191,7 @@ class SlaveStatePanelClass(wx.Panel):
         Create grid for "SyncManager"
         """
         # declare Table object
-        self.SyncManagersTable = SyncManagersTable(
-            self, [], GetSyncManagersTableColnames())
+        self.SyncManagersTable = SyncManagersTable(self, [], GetSyncManagersTableColnames())
         self.SyncManagersGrid.SetTable(self.SyncManagersTable)
         # set grid alignment attr. (CENTER)
         self.SyncManagersGridColAlignements = [wx.ALIGN_CENTRE, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE,
@@ -217,11 +201,9 @@ class SlaveStatePanelClass(wx.Panel):
         self.SyncManagersGrid.SetRowLabelSize(0)
         for col in range(self.SyncManagersTable.GetNumberCols()):
             attr = wx.grid.GridCellAttr()
-            attr.SetAlignment(
-                self.SyncManagersGridColAlignements[col], wx.ALIGN_CENTRE)
+            attr.SetAlignment(self.SyncManagersGridColAlignements[col], wx.ALIGN_CENTRE)
             self.SyncManagersGrid.SetColAttr(col, attr)
-            self.SyncManagersGrid.SetColMinimalWidth(
-                col, self.SyncManagersGridColSizes[col])
+            self.SyncManagersGrid.SetColMinimalWidth(col, self.SyncManagersGridColSizes[col])
             self.SyncManagersGrid.AutoSizeColumn(col, False)
 
         self.RefreshSlaveInfos()
@@ -231,13 +213,11 @@ class SlaveStatePanelClass(wx.Panel):
         Fill data in "Slave Information" and "SyncManager"
         """
         slave_infos = self.Controler.GetSlaveInfos()
-        sync_manager_section = [
-            "vendor", "product_code", "revision_number", "physics"]
+        sync_manager_section = ["vendor", "product_code", "revision_number", "physics"]
         if slave_infos is not None:
             # this method is same as "TextCtrl.SetValue"
             for textctrl_name in sync_manager_section:
-                self.TextCtrlDic[textctrl_name].SetValue(
-                    slave_infos[textctrl_name])
+                self.TextCtrlDic[textctrl_name].SetValue(slave_infos[textctrl_name])
             self.SyncManagersTable.SetData(slave_infos["sync_managers"])
             self.SyncManagersTable.ResetView(self.SyncManagersGrid)
         else:
@@ -257,10 +237,8 @@ class SlaveStatePanelClass(wx.Panel):
 
             # If target state is one of {INIT, PREOP, SAFEOP}, request slave state transition immediately.
             if event.GetId() < 3:
-                self.Controler.CommonMethod.RequestSlaveState(
-                    state_dic[event.GetId()])
-                self.TextCtrlDic["TargetState"].SetValue(
-                    state_dic[event.GetId()])
+                self.Controler.CommonMethod.RequestSlaveState(state_dic[event.GetId()])
+                self.TextCtrlDic["TargetState"].SetValue(state_dic[event.GetId()])
 
             # If target state is OP, first check "PLC status".
             #  (1) If current PLC status is "Started", then request slave state transition
@@ -271,8 +249,7 @@ class SlaveStatePanelClass(wx.Panel):
                     self.Controler.CommonMethod.RequestSlaveState("OP")
                     self.TextCtrlDic["TargetState"].SetValue("OP")
                 else:
-                    self.Controler.CommonMethod.CreateErrorDialog(
-                        _("PLC is Not Started"))
+                    self.Controler.CommonMethod.CreateErrorDialog(_("PLC is Not Started"))
 
     def GetCurrentState(self, event):
         """
@@ -335,7 +312,7 @@ class SDOPanelClass(wx.Panel):
         @param parent: Reference to the parent EtherCATManagementTreebook class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
 
         self.DatatypeDescription, self.CommunicationObject, self.ManufacturerSpecific, \
             self.ProfileSpecific, self.Reserved, self.AllSDOData = range(6)
@@ -343,16 +320,14 @@ class SDOPanelClass(wx.Panel):
         self.Controler = controler
 
         self.SDOManagementMainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.SDOManagementInnerMainSizer = wx.FlexGridSizer(
-            cols=1, hgap=10, rows=2, vgap=10)
+        self.SDOManagementInnerMainSizer = wx.FlexGridSizer(cols=1, hgap=10, rows=2, vgap=10)
 
         self.SDOUpdate = wx.Button(self, label=_('update'))
         self.SDOUpdate.Bind(wx.EVT_BUTTON, self.SDOInfoUpdate)
 
         self.CallSDONoteBook = SDONoteBook(self, controler=self.Controler)
         self.SDOManagementInnerMainSizer.Add(self.SDOUpdate)
-        self.SDOManagementInnerMainSizer.Add(
-            self.CallSDONoteBook, wx.ALL | wx.EXPAND)
+        self.SDOManagementInnerMainSizer.Add(self.CallSDONoteBook, wx.ALL | wx.EXPAND)
 
         self.SDOManagementMainSizer.Add(self.SDOManagementInnerMainSizer)
 
@@ -386,8 +361,7 @@ class SDOPanelClass(wx.Panel):
         """
 
         slaveSDO_progress = wx.ProgressDialog(_("Slave SDO Monitoring"), _("Now Uploading..."),
-                                              maximum=len(
-                                                  self.SDOs.splitlines()),
+                                              maximum=len(self.SDOs.splitlines()),
                                               parent=self,
                                               style=wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
                                               wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME |
@@ -441,21 +415,17 @@ class SDOPanelClass(wx.Panel):
                              'type': type.strip(), 'size': size.strip(),  'name': name_after_check.strip("\""),
                              'value': hex_val.strip(), "category": title_name.strip("\"")}
 
-                category_divide_value = [
-                    0x1000, 0x2000, 0x6000, 0xa000, 0xffff]
+                category_divide_value = [0x1000, 0x2000, 0x6000, 0xa000, 0xffff]
 
                 for count in range(len(category_divide_value)):
                     if int(idx, 0) < category_divide_value[count]:
-                        self.Controler.CommonMethod.SaveSDOData[count].append(
-                            self.Data)
+                        self.Controler.CommonMethod.SaveSDOData[count].append(self.Data)
                         break
 
-                self.Controler.CommonMethod.SaveSDOData[self.AllSDOData].append(
-                    self.Data)
+                self.Controler.CommonMethod.SaveSDOData[self.AllSDOData].append(self.Data)
 
             if count >= len(self.SDOs.splitlines()) // 2:
-                (keep_going, _skip) = slaveSDO_progress.Update(
-                    count, "Please waiting a moment!!")
+                (keep_going, _skip) = slaveSDO_progress.Update(count, "Please waiting a moment!!")
             else:
                 (keep_going, _skip) = slaveSDO_progress.Update(count)
 
@@ -495,7 +465,7 @@ class SDONoteBook(wx.Notebook):
         @param parent: Reference to the parent SDOPanelClass class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, id=-1, size=(850, 500))
+        wx.Notebook.__init__(self, parent, id=-1, size=(850, 500))
         self.Controler = controler
         self.parent = parent
 
@@ -541,8 +511,8 @@ class SlaveSDOTable(wx.grid.Grid):
         @param parent: Reference to the parent SDOPanelClass class
         @param data: SDO data after parsing "SDOParser" method
         """
-        super().__init__(parent, -1, size=(830, 490),
-                         style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        wx.grid.Grid.__init__(self, parent, -1, size=(830, 490),
+                              style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
         self.Controler = parent.Controler
         self.parent = parent
@@ -585,16 +555,13 @@ class SlaveSDOTable(wx.grid.Grid):
         """
         Cell is filled by new parsing data
         """
-        sdo_list = ['idx', 'subIdx', 'access', 'type',
-                    'size', 'category', 'name', 'value']
+        sdo_list = ['idx', 'subIdx', 'access', 'type', 'size', 'category', 'name', 'value']
         for row_idx in range(len(self.SDOs)):
             for col_idx in range(len(self.SDOs[row_idx])):
-                self.SetCellValue(row_idx, col_idx,
-                                  self.SDOs[row_idx][sdo_list[col_idx]])
+                self.SetCellValue(row_idx, col_idx, self.SDOs[row_idx][sdo_list[col_idx]])
                 self.SetReadOnly(row_idx, col_idx, True)
                 if col_idx < 5:
-                    self.SetCellAlignment(
-                        row_idx, col_idx, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+                    self.SetCellAlignment(row_idx, col_idx, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
 
     def CheckSDODataAccess(self, row):
         """
@@ -678,16 +645,13 @@ class SlaveSDOTable(wx.grid.Grid):
                             self.SDOs[event.GetRow()]['subIdx'],
                             dlg.GetValue())
 
-                        self.SetCellValue(
-                            event.GetRow(), event.GetCol(), hex(int(dlg.GetValue(), 0)))
+                        self.SetCellValue(event.GetRow(), event.GetCol(), hex(int(dlg.GetValue(), 0)))
                     else:
-                        self.Controler.CommonMethod.CreateErrorDialog(
-                            _('You cannot SDO download this state'))
+                        self.Controler.CommonMethod.CreateErrorDialog(_('You cannot SDO download this state'))
                 # Error occured process of "int(variable)"
                 # User input is not hex, dec value
                 except ValueError:
-                    self.Controler.CommonMethod.CreateErrorDialog(
-                        _('You can input only hex, dec value'))
+                    self.Controler.CommonMethod.CreateErrorDialog(_('You can input only hex, dec value'))
 
 
 # -------------------------------------------------------------------------------
@@ -702,19 +666,16 @@ class PDOPanelClass(wx.Panel):
         @param parent: Reference to the parent EtherCATManagementTreebook class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
         self.Controler = controler
 
         self.PDOMonitoringEditorMainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.PDOMonitoringEditorInnerMainSizer = wx.FlexGridSizer(
-            cols=1, hgap=10, rows=2, vgap=10)
+        self.PDOMonitoringEditorInnerMainSizer = wx.FlexGridSizer(cols=1, hgap=10, rows=2, vgap=10)
 
         self.CallPDOChoicebook = PDOChoicebook(self, controler=self.Controler)
-        self.PDOMonitoringEditorInnerMainSizer.Add(
-            self.CallPDOChoicebook, wx.ALL)
+        self.PDOMonitoringEditorInnerMainSizer.Add(self.CallPDOChoicebook, wx.ALL)
 
-        self.PDOMonitoringEditorMainSizer.Add(
-            self.PDOMonitoringEditorInnerMainSizer)
+        self.PDOMonitoringEditorMainSizer.Add(self.PDOMonitoringEditorInnerMainSizer)
 
         self.SetSizer(self.PDOMonitoringEditorMainSizer)
 
@@ -738,8 +699,7 @@ class PDOChoicebook(wx.Choicebook):
         @param parent: Reference to the parent PDOPanelClass class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, id=-1,
-                         size=(500, 500), style=wx.CHB_DEFAULT)
+        wx.Choicebook.__init__(self, parent, id=-1, size=(500, 500), style=wx.CHB_DEFAULT)
         self.Controler = controler
 
         RxWin = PDONoteBook(self, controler=self.Controler, name="Rx")
@@ -759,7 +719,7 @@ class PDONoteBook(wx.Notebook):
         @param name: identifier whether RxPDO or TxPDO
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, id=-1, size=(640, 400))
+        wx.Notebook.__init__(self, parent, id=-1, size=(640, 400))
         self.Controler = controler
 
         count = 0
@@ -802,8 +762,8 @@ class PDOEntryTable(wx.grid.Grid):
         @param entry : data structure including index, name, entry number
         @param count : page number
         """
-        super().__init__(parent, -1, size=(500, 400), pos=wxpatch.Point(0, 0),
-                         style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        wx.grid.Grid.__init__(self, parent, -1, size=(500, 400), pos=wx.Point(0, 0),
+                              style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
         self.Controler = parent.Controler
 
@@ -850,17 +810,13 @@ class PDOEntryTable(wx.grid.Grid):
             for col_idx in range(len(self.PDOEntry[row_idx])):
                 # entry index is converted hex value.
                 if col_idx == 0:
-                    self.SetCellValue(row_idx, col_idx, hex(
-                        self.PDOEntry[start_value][pdo_list[col_idx]]))
+                    self.SetCellValue(row_idx, col_idx, hex(self.PDOEntry[start_value][pdo_list[col_idx]]))
                 else:
-                    self.SetCellValue(row_idx, col_idx, str(
-                        self.PDOEntry[start_value][pdo_list[col_idx]]))
+                    self.SetCellValue(row_idx, col_idx, str(self.PDOEntry[start_value][pdo_list[col_idx]]))
                 if col_idx != 4:
-                    self.SetCellAlignment(
-                        row_idx, col_idx, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+                    self.SetCellAlignment(row_idx, col_idx, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
                 else:
-                    self.SetCellAlignment(
-                        row_idx, col_idx, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
+                    self.SetCellAlignment(row_idx, col_idx, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
                 self.SetReadOnly(row_idx, col_idx, True)
                 self.SetRowSize(row_idx, 25)
             start_value += 1
@@ -877,7 +833,7 @@ class EEPROMAccessPanel(wx.Panel):
         @param parent: Reference to the parent EtherCATManagementTreebook class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
         sizer = wx.FlexGridSizer(cols=1, hgap=20, rows=3, vgap=20)
 
         line = wx.StaticText(self, -1, "\n  EEPROM Access is composed to SmartView and HexView. \
@@ -899,7 +855,7 @@ class SlaveSiiSmartView(wx.Panel):
         @param parent: Reference to the parent EtherCATManagementTreebook class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
         self.parent = parent
         self.Controler = controler
 
@@ -954,8 +910,7 @@ class SlaveSiiSmartView(wx.Panel):
         if check_connect_flag:
             status, _log_count = self.Controler.GetCTRoot()._connector.GetPLCstatus()
             if status is not PlcStatus.Started:
-                dialog = wx.FileDialog(self, _("Choose a binary file"), os.getcwd(), "",  _(
-                    "bin files (*.bin)|*.bin"), wx.OPEN)
+                dialog = wx.FileDialog(self, _("Choose a binary file"), os.getcwd(), "",  _("bin files (*.bin)|*.bin"), wx.OPEN)
 
                 if dialog.ShowModal() == wx.ID_OK:
                     filepath = dialog.GetPath()
@@ -972,8 +927,7 @@ class SlaveSiiSmartView(wx.Panel):
                         self.Controler.CommonMethod.SiiData = self.SiiBinary
                         self.SetEEPROMData()
                     except Exception:
-                        self.Controler.CommonMethod.CreateErrorDialog(
-                            _('The file does not exist!'))
+                        self.Controler.CommonMethod.CreateErrorDialog(_('The file does not exist!'))
                         dialog.Destroy()
 
     def ReadFromEEPROM(self, event):
@@ -987,8 +941,7 @@ class SlaveSiiSmartView(wx.Panel):
             self.SiiBinary = self.Controler.CommonMethod.LoadData()
             self.SetEEPROMData()
             dialog = wx.FileDialog(self, _("Save as..."), os.getcwd(),
-                                   "slave0.bin",  _(
-                                       "bin files (*.bin)|*.bin|All files|*.*"),
+                                   "slave0.bin",  _("bin files (*.bin)|*.bin|All files|*.*"),
                                    wx.SAVE | wx.OVERWRITE_PROMPT)
 
             if dialog.ShowModal() == wx.ID_OK:
@@ -1006,7 +959,7 @@ class SlaveSiiSmartView(wx.Panel):
         # Config Data: EEPROM Size, PDI Type, Device Emulation
         # Find PDI Type in pdiType dictionary
         cnt_pdi_type = self.Controler.CommonMethod.SmartViewInfosFromXML["pdi_type"]
-        for i in self.PDIType.keys():
+        for i in list(self.PDIType.keys()):
             if cnt_pdi_type == i:
                 cnt_pdi_type = self.PDIType[i][0]
                 break
@@ -1017,45 +970,34 @@ class SlaveSiiSmartView(wx.Panel):
                                 cnt_pdi_type),
                                ("Device Emulation",
                                 self.Controler.CommonMethod.SmartViewInfosFromXML["device_emulation"])]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.ConfigData[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.ConfigData[treelist], data, 1)
 
         # Device Identity: Vendor ID, Product Code, Revision No., Serial No.
         #  Set Device Identity
         for treelist, data in [("Vendor ID", self.Controler.CommonMethod.SmartViewInfosFromXML["vendor_id"]),
-                               ("Product Code",
-                                self.Controler.CommonMethod.SmartViewInfosFromXML["product_code"]),
-                               ("Revision No.",
-                                self.Controler.CommonMethod.SmartViewInfosFromXML["revision_no"]),
+                               ("Product Code", self.Controler.CommonMethod.SmartViewInfosFromXML["product_code"]),
+                               ("Revision No.", self.Controler.CommonMethod.SmartViewInfosFromXML["revision_no"]),
                                ("Serial No.", self.Controler.CommonMethod.SmartViewInfosFromXML["serial_no"])]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.DeviceIdentity[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.DeviceIdentity[treelist], data, 1)
 
         # Mailbox: Supported Mailbox, Bootstrap Configuration, Standard Configuration
         #  Set Mailbox
         for treelist, data in [("Supported Mailbox", self.Controler.CommonMethod.SmartViewInfosFromXML["supported_mailbox"]),
                                ("Bootstrap Configuration", ""),
                                ("Standard Configuration", "")]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.Mailbox[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.Mailbox[treelist], data, 1)
         #  Set Bootstrap Configuration: Receive Offset, Receive Size, Send Offset, Send Size
         for treelist, data in [("Receive Offset", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_bootstrapconf_outstart"]),
-                               ("Receive Size",
-                                self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_bootstrapconf_outlength"]),
-                               ("Send Offset",
-                                self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_bootstrapconf_instart"]),
+                               ("Receive Size", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_bootstrapconf_outlength"]),
+                               ("Send Offset", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_bootstrapconf_instart"]),
                                ("Send Size", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_bootstrapconf_inlength"])]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.BootstrapConfig[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.BootstrapConfig[treelist], data, 1)
         #  Set Standard Configuration: Receive Offset, Receive Size, Send Offset, Send Size
         for treelist, data in [("Receive Offset", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_standardconf_outstart"]),
-                               ("Receive Size",
-                                self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_standardconf_outlength"]),
-                               ("Send Offset",
-                                self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_standardconf_instart"]),
+                               ("Receive Size", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_standardconf_outlength"]),
+                               ("Send Offset", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_standardconf_instart"]),
                                ("Send Size", self.Controler.CommonMethod.SmartViewInfosFromXML["mailbox_standardconf_inlength"])]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.StandardConfig[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.StandardConfig[treelist], data, 1)
 
     def SetEEPROMData(self):
         """
@@ -1094,47 +1036,37 @@ class SlaveSiiSmartView(wx.Panel):
 
         # Config Data: EEPROM Size, PDI Type, Device Emulation
         # EEPROM's data in address '0x003f' is Size of EEPROM in KBit-1
-        eeprom_size = str(
-            (int(self.GetWordAddressData(sii_dict.get('Size'), 10))+1)//8*1024)
+        eeprom_size = str((int(self.GetWordAddressData(sii_dict.get('Size'), 10))+1)//8*1024)
         # Find PDI Type in pdiType dictionary
-        cnt_pdi_type = int(self.GetWordAddressData(
-            sii_dict.get('PDIControl'), 16).split('x')[1][2:4], 16)
-        for i in self.PDIType.keys():
+        cnt_pdi_type = int(self.GetWordAddressData(sii_dict.get('PDIControl'), 16).split('x')[1][2:4], 16)
+        for i in list(self.PDIType.keys()):
             if cnt_pdi_type == i:
                 cnt_pdi_type = self.PDIType[i][0]
                 break
         #  Get Device Emulation
-        device_emulation = str(bool(int("{:0>16b}".format(
-            int(self.GetWordAddressData(sii_dict.get('PDIControl'), 16), 16))[7])))
+        device_emulation = str(bool(int("{:0>16b}".format(int(self.GetWordAddressData(sii_dict.get('PDIControl'), 16), 16))[7])))
         #  Set Config Data
         for treelist, data in [("EEPROM Size (Bytes)", eeprom_size),
                                ("PDI Type", cnt_pdi_type),
                                ("Device Emulation", device_emulation)]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.ConfigData[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.ConfigData[treelist], data, 1)
 
         # Device Identity: Vendor ID, Product Code, Revision No., Serial No.
         #  Set Device Identity
         for treelist, data in [
-                ("Vendor ID", self.GetWordAddressData(
-                    sii_dict.get('VendorID'), 16)),
-                ("Product Code", self.GetWordAddressData(
-                    sii_dict.get('ProductCode'), 16)),
-                ("Revision No.", self.GetWordAddressData(
-                    sii_dict.get('RevisionNumber'), 16)),
+                ("Vendor ID", self.GetWordAddressData(sii_dict.get('VendorID'), 16)),
+                ("Product Code", self.GetWordAddressData(sii_dict.get('ProductCode'), 16)),
+                ("Revision No.", self.GetWordAddressData(sii_dict.get('RevisionNumber'), 16)),
                 ("Serial No.", self.GetWordAddressData(sii_dict.get('SerialNumber'), 16))]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.DeviceIdentity[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.DeviceIdentity[treelist], data, 1)
 
         # Mailbox
         # EEORPOM's word address '1c' indicates supported mailbox protocol.
         # each value of mailbox protocol :
         # VoE(0x0020), SoE(0x0010), FoE(0x0008), CoE(0x0004), EoE(0x0002), AoE(0x0001)
         supported_mailbox = ""
-        mailbox_protocol = ["VoE,  ", "SoE,  ",
-                            "FoE,  ", "CoE,  ", "EoE,  ", "AoE,  "]
-        mailbox_data = "{:0>8b}".format(
-            int(self.GetWordAddressData(sii_dict.get('MailboxProtocol'), 16), 16))
+        mailbox_protocol = ["VoE,  ", "SoE,  ", "FoE,  ", "CoE,  ", "EoE,  ", "AoE,  "]
+        mailbox_data = "{:0>8b}".format(int(self.GetWordAddressData(sii_dict.get('MailboxProtocol'), 16), 16))
         for protocol in range(6):
             if mailbox_data[protocol+2] == '1':
                 supported_mailbox += mailbox_protocol[protocol]
@@ -1143,30 +1075,21 @@ class SlaveSiiSmartView(wx.Panel):
         for treelist, data in [("Supported Mailbox", supported_mailbox),
                                ("Bootstrap Configuration", ""),
                                ("Standard Configuration", "")]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.Mailbox[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.Mailbox[treelist], data, 1)
         #  Set Bootstrap Configuration: Receive Offset, Receive Size, Send Offset, Send Size
         for treelist, data in [
-                ("Receive Offset", self.GetWordAddressData(
-                    sii_dict.get('BootstrapReceiveMailboxOffset'), 10)),
-                ("Receive Size", self.GetWordAddressData(
-                    sii_dict.get('BootstrapReceiveMailboxSize'), 10)),
-                ("Send Offset", self.GetWordAddressData(
-                    sii_dict.get('BootstrapSendMailboxOffset'), 10)),
+                ("Receive Offset", self.GetWordAddressData(sii_dict.get('BootstrapReceiveMailboxOffset'), 10)),
+                ("Receive Size", self.GetWordAddressData(sii_dict.get('BootstrapReceiveMailboxSize'), 10)),
+                ("Send Offset", self.GetWordAddressData(sii_dict.get('BootstrapSendMailboxOffset'), 10)),
                 ("Send Size", self.GetWordAddressData(sii_dict.get('BootstrapSendMailboxSize'), 10))]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.BootstrapConfig[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.BootstrapConfig[treelist], data, 1)
         #  Set Standard Configuration: Receive Offset, Receive Size, Send Offset, Send Size
         for treelist, data in [
-                ("Receive Offset", self.GetWordAddressData(
-                    sii_dict.get('StandardReceiveMailboxOffset'), 10)),
-                ("Receive Size", self.GetWordAddressData(
-                    sii_dict.get('StandardReceiveMailboxSize'), 10)),
-                ("Send Offset", self.GetWordAddressData(
-                    sii_dict.get('StandardSendMailboxOffset'), 10)),
+                ("Receive Offset", self.GetWordAddressData(sii_dict.get('StandardReceiveMailboxOffset'), 10)),
+                ("Receive Size", self.GetWordAddressData(sii_dict.get('StandardReceiveMailboxSize'), 10)),
+                ("Send Offset", self.GetWordAddressData(sii_dict.get('StandardSendMailboxOffset'), 10)),
                 ("Send Size", self.GetWordAddressData(sii_dict.get('StandardSendMailboxSize'), 10))]:
-            self.TreeListCtrl.Tree.SetItemText(
-                self.TreeListCtrl.StandardConfig[treelist], data, 1)
+            self.TreeListCtrl.Tree.SetItemText(self.TreeListCtrl.StandardConfig[treelist], data, 1)
 
     def MakeStaticBoxSizer(self, boxlabel):
         """
@@ -1216,7 +1139,7 @@ class SmartViewTreeListCtrl(wx.Panel):
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
 
-        super().__init__(parent, -1, size=(350, 500))
+        wx.Panel.__init__(self, parent, -1, size=(350, 500))
 
         self.Tree = wx.gizmos.TreeListCtrl(self, -1, size=(350, 500),
                                            style=(wx.TR_DEFAULT_STYLE |
@@ -1241,30 +1164,25 @@ class SmartViewTreeListCtrl(wx.Panel):
         #   Config Data
         self.ConfigData = {}
         for lv2 in ["EEPROM Size (Bytes)", "PDI Type", "Device Emulation"]:
-            self.ConfigData[lv2] = self.Tree.AppendItem(
-                self.Level1Nodes["Config Data"], lv2)
+            self.ConfigData[lv2] = self.Tree.AppendItem(self.Level1Nodes["Config Data"], lv2)
         #   Device Identity
         self.DeviceIdentity = {}
         for lv2 in ["Vendor ID", "Product Code", "Revision No.", "Serial No."]:
-            self.DeviceIdentity[lv2] = self.Tree.AppendItem(
-                self.Level1Nodes["Device Identity"], lv2)
+            self.DeviceIdentity[lv2] = self.Tree.AppendItem(self.Level1Nodes["Device Identity"], lv2)
         #   Mailbox
         self.Mailbox = {}
         for lv2 in ["Supported Mailbox", "Bootstrap Configuration", "Standard Configuration"]:
-            self.Mailbox[lv2] = self.Tree.AppendItem(
-                self.Level1Nodes["Mailbox"], lv2)
+            self.Mailbox[lv2] = self.Tree.AppendItem(self.Level1Nodes["Mailbox"], lv2)
 
         #  Level 3 nodes
         #   Children of Bootstrap Configuration
         self.BootstrapConfig = {}
         for lv3 in ["Receive Offset", "Receive Size", "Send Offset", "Send Size"]:
-            self.BootstrapConfig[lv3] = self.Tree.AppendItem(
-                self.Mailbox["Bootstrap Configuration"], lv3)
+            self.BootstrapConfig[lv3] = self.Tree.AppendItem(self.Mailbox["Bootstrap Configuration"], lv3)
         #   Children of Standard Configuration
         self.StandardConfig = {}
         for lv3 in ["Receive Offset", "Receive Size", "Send Offset", "Send Size"]:
-            self.StandardConfig[lv3] = self.Tree.AppendItem(
-                self.Mailbox["Standard Configuration"], lv3)
+            self.StandardConfig[lv3] = self.Tree.AppendItem(self.Mailbox["Standard Configuration"], lv3)
 
         # Expand Tree
         for tree in [self.Root,
@@ -1287,7 +1205,7 @@ class HexView(wx.Panel):
         @param parent: Reference to the parent EtherCATManagementTreebook class
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
         self.parent = parent
         self.Controler = controler
 
@@ -1309,12 +1227,9 @@ class HexView(wx.Panel):
             self.HexViewSizer["siiButton"].Add(self.HexViewButton[key])
 
         self.SiiBinary = self.Controler.CommonMethod.XmlToEeprom()
-        self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(
-            self.SiiBinary)
-        self.SiiGrid = SiiGridTable(
-            self, self.Controler, self.HexRow, self.HexCol)
-        self.HexViewSizer["view"].AddMany(
-            [self.HexViewSizer["siiButton"], self.SiiGrid])
+        self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(self.SiiBinary)
+        self.SiiGrid = SiiGridTable(self, self.Controler, self.HexRow, self.HexCol)
+        self.HexViewSizer["view"].AddMany([self.HexViewSizer["siiButton"], self.SiiGrid])
         self.SiiGrid.CreateGrid(self.HexRow, self.HexCol)
         self.SetSizer(self.HexViewSizer["view"])
         self.HexViewSizer["view"].FitInside(self.parent.parent)
@@ -1347,8 +1262,7 @@ class HexView(wx.Panel):
         if check_connect_flag:
             # load from EEPROM data and parsing
             self.SiiBinary = self.Controler.CommonMethod.LoadData()
-            self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(
-                self.SiiBinary)
+            self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(self.SiiBinary)
             self.UpdateSiiGridTable(self.HexRow, self.HexCol)
             self.SiiGrid.SetValue(self.HexCode)
             self.SiiGrid.Update()
@@ -1400,14 +1314,12 @@ class HexView(wx.Panel):
             try:
                 binfile = open(filepath, "rb")
                 self.SiiBinary = binfile.read()
-                self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(
-                    self.SiiBinary)
+                self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(self.SiiBinary)
                 self.UpdateSiiGridTable(self.HexRow, self.HexCol)
                 self.SiiGrid.SetValue(self.HexCode)
                 self.SiiGrid.Update()
             except Exception:
-                self.Controler.CommonMethod.CreateErrorDialog(
-                    _('The file does not exist!'))
+                self.Controler.CommonMethod.CreateErrorDialog(_('The file does not exist!'))
 
         dialog.Destroy()
 
@@ -1418,8 +1330,7 @@ class HexView(wx.Panel):
         @param event : wx.EVT_BUTTON object
         """
         self.SiiBinary = self.Controler.CommonMethod.XmlToEeprom()
-        self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(
-            self.SiiBinary)
+        self.HexCode, self.HexRow, self.HexCol = self.Controler.CommonMethod.HexRead(self.SiiBinary)
         self.UpdateSiiGridTable(self.HexRow, self.HexCol)
         self.SiiGrid.SetValue(self.HexCode)
         self.SiiGrid.Update()
@@ -1441,8 +1352,8 @@ class SiiGridTable(wx.grid.Grid):
         self.Row = row
         self.Col = col
 
-        super().__init__(parent, -1, size=(830, 450),
-                         style=wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        wx.grid.Grid.__init__(self, parent, -1, size=(830, 450),
+                              style=wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
     def SetValue(self, value):
         """
@@ -1468,11 +1379,9 @@ class SiiGridTable(wx.grid.Grid):
                 self.SetCellValue(row, col, hex)
 
                 if col == 16:
-                    self.SetCellAlignment(
-                        row, col, wx.ALIGN_LEFT, wx.ALIGN_CENTER)
+                    self.SetCellAlignment(row, col, wx.ALIGN_LEFT, wx.ALIGN_CENTER)
                 else:
-                    self.SetCellAlignment(
-                        row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTER)
+                    self.SetCellAlignment(row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTER)
 
                 self.SetReadOnly(row, col, True)
                 col = col + 1
@@ -1493,7 +1402,7 @@ class RegisterAccessPanel(wx.Panel):
         self.Controler = controler
         self.__init_data()
 
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
 
         sizer = wx.FlexGridSizer(cols=1, hgap=20, rows=2, vgap=5)
         button_sizer = wx.FlexGridSizer(cols=2, hgap=10, rows=1, vgap=10)
@@ -1507,27 +1416,22 @@ class RegisterAccessPanel(wx.Panel):
         self.SetSizer(sizer)
 
         self.ReloadButton.Bind(wx.EVT_BUTTON, self.OnReloadButton)
-        self.CompactViewCheckbox.Bind(
-            wx.EVT_CHECKBOX, self.ToggleCompactViewCheckbox)
+        self.CompactViewCheckbox.Bind(wx.EVT_CHECKBOX, self.ToggleCompactViewCheckbox)
 
         for index in range(4):
-            self.RegisterNotebook.RegPage[index].MainTable.CreateGrid(
-                self.MainRow[index], self.MainCol)
-            self.RegisterNotebook.RegPage[index].MainTable.SetValue(
-                self, 0, index*512, (index+1)*512)
+            self.RegisterNotebook.RegPage[index].MainTable.CreateGrid(self.MainRow[index], self.MainCol)
+            self.RegisterNotebook.RegPage[index].MainTable.SetValue(self, 0, index*512, (index+1)*512)
 
         # data default setting
         if self.Controler.CommonMethod.RegData == "":
             self.CompactViewCheckbox.Disable()
             for index in range(4):
-                self.RegisterNotebook.RegPage[index].MainTable.SetValue(
-                    self, 0, index*512, (index+1)*512)
+                self.RegisterNotebook.RegPage[index].MainTable.SetValue(self, 0, index*512, (index+1)*512)
         else:  # If data was saved,
             self.BasicSetData()
             self.ParseData()
             for index in range(4):
-                self.RegisterNotebook.RegPage[index].MainTable.SetValue(
-                    self, self.RegMonitorData, index*512, (index+1)*512)
+                self.RegisterNotebook.RegPage[index].MainTable.SetValue(self, self.RegMonitorData, index*512, (index+1)*512)
 
     def __init_data(self):
         """
@@ -1560,9 +1464,7 @@ class RegisterAccessPanel(wx.Panel):
         # ex : ethercat reg_read -p 0 0x0000 0x0001
         # return value : 0x11
         for index in range(4):
-            self.Controler.CommonMethod.RegData = self.Controler.CommonMethod.RegData + " " + \
-                self.Controler.CommonMethod.RegRead(
-                    "0x"+"{:0>4x}".format(index*1024), "0x0400")
+            self.Controler.CommonMethod.RegData = self.Controler.CommonMethod.RegData + " " + self.Controler.CommonMethod.RegRead("0x"+"{:0>4x}".format(index*1024), "0x0400")
 
         # store previous value
         # (ESC type, port number of FMMU, port number of SM, and PDI type))
@@ -1575,8 +1477,7 @@ class RegisterAccessPanel(wx.Panel):
                                   ("FMMUNumber", "0x0004"),
                                   ("SMNumber", "0x0005"),
                                   ("PDIType", "0x0140")]:
-            self.Controler.CommonMethod.CrtRegSpec[reg_spec] = self.Controler.CommonMethod.RegRead(
-                address, "0x0001")
+            self.Controler.CommonMethod.CrtRegSpec[reg_spec] = self.Controler.CommonMethod.RegRead(address, "0x0001")
 
         # Enable compactView checkbox
         self.CompactViewCheckbox.Enable()
@@ -1588,15 +1489,11 @@ class RegisterAccessPanel(wx.Panel):
         """
         # parse the above register's value
         # If the value is 0x12, the result is 12
-        self.ESCType = self.Controler.CommonMethod.CrtRegSpec["ESCType"].split('x')[
-            1]
-        self.PDIType = self.Controler.CommonMethod.CrtRegSpec["PDIType"].split('x')[
-            1]
+        self.ESCType = self.Controler.CommonMethod.CrtRegSpec["ESCType"].split('x')[1]
+        self.PDIType = self.Controler.CommonMethod.CrtRegSpec["PDIType"].split('x')[1]
         # If the value is 0x12, the result is 18 (It's converted to decimal value)
-        self.FMMUNumber = int(
-            self.Controler.CommonMethod.CrtRegSpec["FMMUNumber"], 16)
-        self.SMNumber = int(
-            self.Controler.CommonMethod.CrtRegSpec["SMNumber"], 16)
+        self.FMMUNumber = int(self.Controler.CommonMethod.CrtRegSpec["FMMUNumber"], 16)
+        self.SMNumber = int(self.Controler.CommonMethod.CrtRegSpec["SMNumber"], 16)
 
         # initialize description dictionary of register main table and register sub table.
         self.RegisterDescriptionDict = {}
@@ -1604,11 +1501,9 @@ class RegisterAccessPanel(wx.Panel):
 
         # ./EthercatMaster/register_information.xml contains register description.
         if wx.Platform == '__WXMSW__':
-            reg_info_file = open(
-                "../../EthercatMaster/register_information.xml", 'r')
+            reg_info_file = open("../../EthercatMaster/register_information.xml", 'r')
         else:
-            reg_info_file = open(
-                "./EthercatMaster/register_information.xml", 'r')
+            reg_info_file = open("./EthercatMaster/register_information.xml", 'r')
         reg_info_tree = minidom.parse(reg_info_file)
         reg_info_file.close()
 
@@ -1619,19 +1514,16 @@ class RegisterAccessPanel(wx.Panel):
                     # If it depends on the property(ESC type, PDI type, FMMU number, SM number)
                     for property, type, value in [("esc", "type", self.ESCType),
                                                   ("pdi", "type", self.PDIType),
-                                                  ("fmmu", "number",
-                                                   self.FMMUNumber),
+                                                  ("fmmu", "number", self.FMMUNumber),
                                                   ("sm", "number", self.SMNumber)]:
-                        if property in register.attributes.keys():
+                        if property in list(register.attributes.keys()):
                             if type == "type":
                                 if register.attributes[property].value == value:
-                                    self.GetRegisterInfo(
-                                        reg_info_tree, register)
+                                    self.GetRegisterInfo(reg_info_tree, register)
                                     break
                             else:  # type == "number"
                                 if register.attributes[property].value < value:
-                                    self.GetRegisterInfo(
-                                        reg_info_tree, register)
+                                    self.GetRegisterInfo(reg_info_tree, register)
                                     break
                         else:
                             self.GetRegisterInfo(reg_info_tree, register)
@@ -1668,25 +1560,20 @@ class RegisterAccessPanel(wx.Panel):
                     if detail.nodeType == reg_info_tree.ELEMENT_NODE and detail.nodeName == "Detail":
                         # If it depends on the property(ESC type, PDI type, FMMU number, SM number)
                         for property, type, value in [("esc", "type", self.ESCType),
-                                                      ("pdi", "type",
-                                                       self.PDIType),
-                                                      ("fmmu", "number",
-                                                       self.FMMUNumber),
+                                                      ("pdi", "type", self.PDIType),
+                                                      ("fmmu", "number", self.FMMUNumber),
                                                       ("sm", "number", self.SMNumber)]:
-                            if property in detail.attributes.keys():
+                            if property in list(detail.attributes.keys()):
                                 if type == "type":
                                     if detail.attributes[property].value == value:
-                                        self.GetRegisterDetailInfo(
-                                            reg_info_tree, reg_index, detail)
+                                        self.GetRegisterDetailInfo(reg_info_tree, reg_index, detail)
                                         break
                                 else:  # type == "number"
                                     if detail.attributes[property].value < value:
-                                        self.GetRegisterDetailInfo(
-                                            reg_info_tree, reg_index, detail)
+                                        self.GetRegisterDetailInfo(reg_info_tree, reg_index, detail)
                                         break
                             else:
-                                self.GetRegisterDetailInfo(
-                                    reg_info_tree, reg_index, detail)
+                                self.GetRegisterDetailInfo(reg_info_tree, reg_index, detail)
                                 break
 
     def GetRegisterDetailInfo(self, reg_info_tree, reg_index, detail):
@@ -1773,8 +1660,7 @@ class RegisterAccessPanel(wx.Panel):
                 char_data = ""
                 for iter in range(2):
                     if int(reg_word[iter*2:iter*2+2], 16) >= 32 and int(reg_word[iter*2:iter*2+2], 16) <= 126:
-                        char_data = char_data + \
-                            chr(int(reg_word[iter*2:iter*2+2], 16))
+                        char_data = char_data + chr(int(reg_word[iter*2:iter*2+2], 16))
                     else:
                         char_data = char_data + "."
                 row_data.append(char_data)
@@ -1880,7 +1766,7 @@ class RegisterNotebook(wx.Notebook):
         @param parent: RegisterAccessPanel object
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, id=-1)
+        wx.Notebook.__init__(self, parent, id=-1)
 
         self.parent = parent
         self.Controler = controler
@@ -1910,7 +1796,7 @@ class RegisterNotebookPanel(wx.Panel):
         @param controler: _EthercatSlaveCTN class in EthercatSlave.py
         @param row, col: size of the table
         """
-        super().__init__(parent, -1)
+        wx.Panel.__init__(self, parent, -1)
 
         self.parent = parent
         self.Controler = controler
@@ -1921,8 +1807,7 @@ class RegisterNotebookPanel(wx.Panel):
 
         self.Sizer = wx.FlexGridSizer(cols=1, hgap=10, rows=2, vgap=30)
 
-        self.MainTable = RegisterMainTable(
-            self, self.Row, self.Col, self.Controler)
+        self.MainTable = RegisterMainTable(self, self.Row, self.Col, self.Controler)
         self.SubTable = RegisterSubTable(self, sub_row, sub_col)
 
         self.SubTable.CreateGrid(sub_row, sub_col)
@@ -1986,12 +1871,11 @@ class RegisterMainTable(wx.grid.Grid):
         self.Controler = controler
         self.RegisterAccessPanel = self.parent.parent.parent
 
-        super().__init__(parent, -1, size=(820, 300),
-                         style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        wx.grid.Grid.__init__(self, parent, -1, size=(820, 300),
+                              style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
         for evt, mapping_method in [(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnSelectCell),
-                                    (wx.grid.EVT_GRID_CELL_LEFT_CLICK,
-                                     self.OnSelectCell),
+                                    (wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnSelectCell),
                                     (wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnRegModifyDialog)]:
             self.Bind(evt, mapping_method)
 
@@ -2025,8 +1909,7 @@ class RegisterMainTable(wx.grid.Grid):
             self.SetRowLabelValue(row, row_index[0])
             for data_index in range(4):
                 self.SetCellValue(row, col, row_index[data_index+1])
-                self.SetCellAlignment(
-                    row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTER)
+                self.SetCellAlignment(row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTER)
                 self.SetReadOnly(row, col, True)
                 col = col + 1
             row = row + 1
@@ -2057,11 +1940,9 @@ class RegisterMainTable(wx.grid.Grid):
                 row_data = []
                 row_data.append(element[BIT_RANGE])
                 row_data.append(element[NAME])
-                bin_data = "{:0>16b}".format(
-                    int(self.GetCellValue(event.GetRow(), 1)))
+                bin_data = "{:0>16b}".format(int(self.GetCellValue(event.GetRow(), 1)))
                 value_range = element[BIT_RANGE].split('-')
-                value = (bin_data[8:16][::-1]+bin_data[0:8][::-1]
-                         )[int(value_range[0]):(int(value_range[-1])+1)][::-1]
+                value = (bin_data[8:16][::-1]+bin_data[0:8][::-1])[int(value_range[0]):(int(value_range[-1])+1)][::-1]
                 row_data.append(str(int(('0b'+str(value)), 2)))
                 if value in element[DESCRIPTIONS]:
                     row_data.append(element[DESCRIPTIONS][value])
@@ -2097,37 +1978,30 @@ class RegisterMainTable(wx.grid.Grid):
 
                     # reg_write
                     # ex) ethercat reg_write -p 0 -t uint16 0x0000 0x0000
-                    return_val = self.Controler.CommonMethod.RegWrite(
-                        '0x'+self.GetRowLabelValue(event.GetRow()), dlg.GetValue())
+                    return_val = self.Controler.CommonMethod.RegWrite('0x'+self.GetRowLabelValue(event.GetRow()), dlg.GetValue())
 
                     if len(return_val) == 0:
                         # set dec
-                        self.SetCellValue(event.GetRow(), 1,
-                                          str(int(dlg.GetValue(), 0)))
+                        self.SetCellValue(event.GetRow(), 1, str(int(dlg.GetValue(), 0)))
                         # set hex
-                        hex_data = '0x' + \
-                            "{:0>4x}".format(int(dlg.GetValue(), 0))
+                        hex_data = '0x'+"{:0>4x}".format(int(dlg.GetValue(), 0))
                         self.SetCellValue(event.GetRow(), 2, hex_data)
                         # set char
                         char_data = ""
                         # If hex_data is been able to convert to ascii code, append ascii code.
                         for iter in range(2):
                             if int(hex_data[(iter+1)*2:(iter+2)*2], 16) >= 32 and int(hex_data[(iter+1)*2:(iter+2)*2], 16) <= 126:
-                                char_data = char_data + \
-                                    chr(int(
-                                        hex_data[(iter+1)*2:(iter+2)*2], 16))
+                                char_data = char_data + chr(int(hex_data[(iter+1)*2:(iter+2)*2], 16))
                             else:
                                 char_data = char_data + "."
 
                         self.SetCellValue(event.GetRow(), 3, char_data)
 
                     else:
-                        self.Controler.CommonMethod.CreateErrorDialog(
-                            _('You can\'t modify it. This register is read-only or it\'s not connected.'))
+                        self.Controler.CommonMethod.CreateErrorDialog(_('You can\'t modify it. This register is read-only or it\'s not connected.'))
 
                 except ValueError:
-                    self.Controler.CommonMethod.CreateErrorDialog(
-                        _('You entered wrong value. You can enter dec or hex value only.'))
+                    self.Controler.CommonMethod.CreateErrorDialog(_('You entered wrong value. You can enter dec or hex value only.'))
 
 
 # -------------------------------------------------------------------------------
@@ -2145,8 +2019,8 @@ class RegisterSubTable(wx.grid.Grid):
         self.Row = row
         self.Col = col
 
-        super().__init__(parent, -1, size=(820, 150),
-                         style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        wx.grid.Grid.__init__(self, parent, -1, size=(820, 150),
+                              style=wx.EXPAND | wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
     def SetValue(self, parent, data):
         """
@@ -2170,8 +2044,7 @@ class RegisterSubTable(wx.grid.Grid):
             col = 0
             for element in rowData:
                 self.SetCellValue(row, col, element)
-                self.SetCellAlignment(
-                    row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTER)
+                self.SetCellAlignment(row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTER)
                 self.SetReadOnly(row, col, True)
                 col = col + 1
             row = row + 1
@@ -2187,8 +2060,8 @@ class MasterStatePanelClass(wx.Panel):
         @param parent: wx.ScrollWindow object
         @Param controler: _EthercatSlaveCTN class in EthercatSlave.py
         """
-        super().__init__(parent, -1, (0, 0),
-                         size=wx.DefaultSize, style=wx.SUNKEN_BORDER)
+        wx.Panel.__init__(self, parent, -1, (0, 0),
+                          size=wx.DefaultSize, style=wx.SUNKEN_BORDER)
         self.Controler = controler
         self.parent = parent
         self.StaticBox = {}
@@ -2204,8 +2077,7 @@ class MasterStatePanelClass(wx.Panel):
                 ("innerMasterState",    [2, 10, 3, 10]),
                 ("innerDeviceInfo",     [4, 10, 3, 10]),
                 ("innerFrameInfo",      [4, 10, 5, 10])]:
-            self.MasterStateSizer[key] = wx.FlexGridSizer(
-                cols=attr[0], hgap=attr[1], rows=attr[2], vgap=attr[3])
+            self.MasterStateSizer[key] = wx.FlexGridSizer(cols=attr[0], hgap=attr[1], rows=attr[2], vgap=attr[3])
 
         self.UpdateButton = wx.Button(self, label=_('Update'))
         self.UpdateButton.Bind(wx.EVT_BUTTON, self.OnButtonClick)
@@ -2223,13 +2095,10 @@ class MasterStatePanelClass(wx.Panel):
                 ('Active', 'Active:'),
                 ('Slaves', 'Slave Count:')]:
             self.StaticText[key] = wx.StaticText(self, label=_(label))
-            self.TextCtrl[key] = wx.TextCtrl(
-                self, size=wx.Size(130, 24), style=wx.TE_READONLY)
-            self.MasterStateSizer['innerMasterState'].AddMany(
-                [self.StaticText[key], self.TextCtrl[key]])
+            self.TextCtrl[key] = wx.TextCtrl(self, size=wx.Size(130, 24), style=wx.TE_READONLY)
+            self.MasterStateSizer['innerMasterState'].AddMany([self.StaticText[key], self.TextCtrl[key]])
 
-        self.MasterStateSizer['masterState'].Add(
-            self.MasterStateSizer['innerMasterState'])
+        self.MasterStateSizer['masterState'].Add(self.MasterStateSizer['innerMasterState'])
 
         # ----------------------- Ethernet Network Card Information ---------------------------------------
         for key, label in [
@@ -2239,13 +2108,10 @@ class MasterStatePanelClass(wx.Panel):
                 ('Rx frames', 'Rx Frames:'),
                 ('Lost frames', 'Lost Frames:')]:
             self.StaticText[key] = wx.StaticText(self, label=_(label))
-            self.TextCtrl[key] = wx.TextCtrl(
-                self, size=wx.Size(130, 24), style=wx.TE_READONLY)
-            self.MasterStateSizer['innerDeviceInfo'].AddMany(
-                [self.StaticText[key], self.TextCtrl[key]])
+            self.TextCtrl[key] = wx.TextCtrl(self, size=wx.Size(130, 24), style=wx.TE_READONLY)
+            self.MasterStateSizer['innerDeviceInfo'].AddMany([self.StaticText[key], self.TextCtrl[key]])
 
-        self.MasterStateSizer['deviceInfo'].Add(
-            self.MasterStateSizer['innerDeviceInfo'])
+        self.MasterStateSizer['deviceInfo'].Add(self.MasterStateSizer['innerDeviceInfo'])
 
         # ----------------------- Network Frame Information -----------------------------------------------
         for key, label in [
@@ -2257,13 +2123,10 @@ class MasterStatePanelClass(wx.Panel):
             self.MasterStateSizer['innerFrameInfo'].Add(self.StaticText[key])
             self.TextCtrl[key] = {}
             for index in ['0', '1', '2']:
-                self.TextCtrl[key][index] = wx.TextCtrl(
-                    self, size=wx.Size(130, 24), style=wx.TE_READONLY)
-                self.MasterStateSizer['innerFrameInfo'].Add(
-                    self.TextCtrl[key][index])
+                self.TextCtrl[key][index] = wx.TextCtrl(self, size=wx.Size(130, 24), style=wx.TE_READONLY)
+                self.MasterStateSizer['innerFrameInfo'].Add(self.TextCtrl[key][index])
 
-        self.MasterStateSizer['frameInfo'].Add(
-            self.MasterStateSizer['innerFrameInfo'])
+        self.MasterStateSizer['frameInfo'].Add(self.MasterStateSizer['innerFrameInfo'])
 
         # --------------------------------- Main Sizer ----------------------------------------------------
         for key, sub, in [
@@ -2272,12 +2135,10 @@ class MasterStatePanelClass(wx.Panel):
                 ('innerMain', ['innerTopHalf', 'innerBottomHalf'])
         ]:
             for key2 in sub:
-                self.MasterStateSizer[key].Add(
-                    self.MasterStateSizer[key2])
+                self.MasterStateSizer[key].Add(self.MasterStateSizer[key2])
 
         self.MasterStateSizer['main'].Add(self.UpdateButton)
-        self.MasterStateSizer['main'].Add(
-            self.MasterStateSizer['innerMain'])
+        self.MasterStateSizer['main'].Add(self.MasterStateSizer['innerMain'])
 
         self.SetSizer(self.MasterStateSizer['main'])
 
@@ -2294,10 +2155,8 @@ class MasterStatePanelClass(wx.Panel):
                 for key in self.TextCtrl:
                     if isinstance(self.TextCtrl[key], dict):
                         for index in self.TextCtrl[key]:
-                            self.TextCtrl[key][index].SetValue(
-                                self.MasterState[key][int(index)])
+                            self.TextCtrl[key][index].SetValue(self.MasterState[key][int(index)])
                     else:
                         self.TextCtrl[key].SetValue(self.MasterState[key][0])
         else:
-            self.Controler.CommonMethod.CreateErrorDialog(
-                _('PLC not connected!'))
+            self.Controler.CommonMethod.CreateErrorDialog(_('PLC not connected!'))

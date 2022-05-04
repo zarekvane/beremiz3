@@ -23,13 +23,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import wx
 
+from dialogs.BlockPreviewDialog import BlockPreviewDialog
 from graphics.GraphicCommons import SELECTION_DIVERGENCE, \
     SELECTION_CONVERGENCE, SIMULTANEOUS_DIVERGENCE, SIMULTANEOUS_CONVERGENCE
 from graphics.SFC_Objects import SFC_Divergence
-from dialogs.BlockPreviewDialog import BlockPreviewDialog
+
 
 # -------------------------------------------------------------------------------
 #                         Create New Divergence Dialog
@@ -50,8 +50,8 @@ class SFCDivergenceDialog(BlockPreviewDialog):
         @param tagname: Tagname of project POU edited
         @param poss_div_types: Types of divergence that will be available in the dialog window
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Create a new divergence or convergence'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Create a new divergence or convergence'))
 
         # Init common sizers
         self._init_sizers(2, 0, 7, None, 2, 1)
@@ -155,7 +155,7 @@ class SFCDivergenceDialog(BlockPreviewDialog):
         self.RefreshPreview()
         event.Skip()
 
-    def RefreshPreview(self):
+    def DrawPreview(self):
         """
         Refresh preview panel of graphic element
         Override BlockPreviewDialog function
@@ -166,4 +166,4 @@ class SFCDivergenceDialog(BlockPreviewDialog):
                                       self.Sequences.GetValue())
 
         # Call BlockPreviewDialog function
-        BlockPreviewDialog.RefreshPreview(self)
+        BlockPreviewDialog.DrawPreview(self)

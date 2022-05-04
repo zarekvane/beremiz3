@@ -22,12 +22,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
-
 import pickle
-import wx
 
-import wxpatch
+import wx
 
 MAX_ITEM_COUNT = 10
 MAX_ITEM_SHOWN = 6
@@ -42,7 +39,7 @@ else:
 class PopupWithListbox(wx.PopupWindow):
 
     def __init__(self, parent, choices=None):
-        super().__init__(parent, wx.BORDER_SIMPLE)
+        wx.PopupWindow.__init__(self, parent, wx.BORDER_SIMPLE)
 
         self.ListBox = wx.ListBox(self, -1, style=wx.LB_HSCROLL | wx.LB_SINGLE | wx.LB_SORT)
 
@@ -94,13 +91,13 @@ class PopupWithListbox(wx.PopupWindow):
         return self.ListBox.GetStringSelection()
 
     def OnLeftDown(self, event):
-        selected = self.ListBox.HitTest(wxpatch.Point(event.GetX(), event.GetY()))
+        selected = self.ListBox.HitTest(wx.Point(event.GetX(), event.GetY()))
         parent_size = self.Parent.GetSize()
-        parent_rect = wxpatch.Rect(0, -parent_size[1], parent_size[0], parent_size[1])
+        parent_rect = wx.Rect(0, -parent_size[1], parent_size[0], parent_size[1])
         if selected != wx.NOT_FOUND:
             wx.CallAfter(self.Parent.SetValueFromSelected, self.ListBox.GetString(selected))
         elif parent_rect.Contains(event.GetX(), event.GetY()):
-            result, x, y = self.Parent.HitTest(wxpatch.Point(event.GetX(), event.GetY() + parent_size[1]))
+            result, x, y = self.Parent.HitTest(wx.Point(event.GetX(), event.GetY() + parent_size[1]))
             if result != wx.TE_HT_UNKNOWN:
                 self.Parent.SetInsertionPoint(self.Parent.XYToPosition(x, y))
         else:
@@ -109,7 +106,7 @@ class PopupWithListbox(wx.PopupWindow):
 
     def OnMotion(self, event):
         self.ListBox.SetSelection(
-            self.ListBox.HitTest(wxpatch.Point(event.GetX(), event.GetY())))
+            self.ListBox.HitTest(wx.Point(event.GetX(), event.GetY())))
         event.Skip()
 
 
@@ -125,7 +122,7 @@ class TextCtrlAutoComplete(wx.TextCtrl):
 
         therest['style'] = wx.TE_PROCESS_ENTER | therest.get('style', 0)
 
-        super().__init__(parent, **therest)
+        wx.TextCtrl.__init__(self, parent, **therest)
 
         # Some variables
         self._dropDownClick = dropDownClick
@@ -200,10 +197,13 @@ class TextCtrlAutoComplete(wx.TextCtrl):
     def OnControlChanged(self, event):
         res = self.GetValue()
         config = wx.ConfigBase.Get()
-        listentries = pickle.loads(str(config.Read(self.element_path, pickle.dumps([]))))
+        det = pickle.dumps([], 0)
+        val = config.Read(self.element_path, det)
+        val = val.encode()
+        listentries = pickle.loads(val)
         if res and res not in listentries:
             listentries = (listentries + [res])[-MAX_ITEM_COUNT:]
-            config.Write(self.element_path, pickle.dumps(listentries))
+            config.Write(self.element_path, pickle.dumps(listentries, 0))
             config.Flush()
             self.SetChoices(listentries)
         self.DismissListBox()

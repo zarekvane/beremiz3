@@ -43,9 +43,9 @@ class PouDialog(wx.Dialog):
     POU_LANGUAGES_DICT = None
 
     def __init__(self, parent, pou_type=None, type_readonly=False):
-        super().__init__(id=-1, parent=parent,
-                         name='PouDialog', title=_('Create a new POU'),
-                         style=wx.DEFAULT_DIALOG_STYLE)
+        wx.Dialog.__init__(self, id=-1, parent=parent,
+                           name='PouDialog', title=_('Create a new POU'),
+                           style=wx.DEFAULT_DIALOG_STYLE)
 
         if PouDialog.POU_TYPES_DICT is None:
             self.InitPouTypesDict()
@@ -58,18 +58,18 @@ class PouDialog(wx.Dialog):
         infos_sizer = wx.FlexGridSizer(cols=2, hgap=5, rows=3, vgap=15)
         infos_sizer.AddGrowableCol(1)
         main_sizer.Add(infos_sizer, border=20,
-                            flag=wx.GROW | wx.TOP | wx.LEFT | wx.RIGHT)
+                       flag=wx.GROW | wx.TOP | wx.LEFT | wx.RIGHT)
 
         pouname_label = wx.StaticText(self, label=_('POU Name:'))
         infos_sizer.Add(pouname_label, border=4,
-                              flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
+                        flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
 
         self.PouName = wx.TextCtrl(self)
         infos_sizer.Add(self.PouName, flag=wx.GROW)
 
         poutype_label = wx.StaticText(self, label=_('POU Type:'))
         infos_sizer.Add(poutype_label, border=4,
-                              flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
+                        flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
 
         self.PouType = wx.ComboBox(self, style=wx.CB_READONLY)
         self.Bind(wx.EVT_COMBOBOX, self.OnTypeChanged, self.PouType)
@@ -77,14 +77,13 @@ class PouDialog(wx.Dialog):
 
         language_label = wx.StaticText(self, label=_('Language:'))
         infos_sizer.Add(language_label, border=4,
-                              flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
+                        flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
 
         self.Language = wx.ComboBox(self, style=wx.CB_READONLY)
         infos_sizer.Add(self.Language, flag=wx.GROW)
 
         button_sizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.CENTRE)
-        self.Bind(wx.EVT_BUTTON, self.OnOK,
-                  button_sizer.GetAffirmativeButton())
+        # self.Bind(wx.EVT_BUTTON, self.OnOK, button_sizer.GetAffirmativeButton())
         main_sizer.Add(button_sizer, border=20,
                             flag=wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT)
 
@@ -107,8 +106,7 @@ class PouDialog(wx.Dialog):
         _() are necessary so mk18n.py could find these string for localization.
         """
         _ = NoTranslate
-        self.__class__.POU_TYPES = [
-            _("function"), _("functionBlock"), _("program")]
+        self.__class__.POU_TYPES = [_("function"), _("functionBlock"), _("program")]
 
     def InitPouTypesDict(self):
         """
@@ -126,8 +124,7 @@ class PouDialog(wx.Dialog):
         _() are necessary so mk18n.py could find these string for localization.
         """
         _ = NoTranslate
-        self.__class__.POU_LANGUAGES = [
-            _("IL"), _("ST"), _("LD"), _("FBD"), _("SFC")]
+        self.__class__.POU_LANGUAGES = [_("IL"), _("ST"), _("LD"), _("FBD"), _("SFC")]
 
     def InitPouLanguagesDict(self):
         """
@@ -167,28 +164,24 @@ class PouDialog(wx.Dialog):
         elif pou_name.upper() in self.PouNames:
             message = _("\"%s\" pou already exists!") % pou_name
         elif pou_name.upper() in self.PouElementNames:
-            message = _(
-                "A POU has an element named \"%s\". This could cause a conflict. Do you wish to continue?") % pou_name
+            message = _("A POU has an element named \"%s\". This could cause a conflict. Do you wish to continue?") % pou_name
             question = True
         if message is not None:
             if question:
-                dialog = wx.MessageDialog(self, message, _(
-                    "Warning"), wx.YES_NO | wx.ICON_EXCLAMATION)
+                dialog = wx.MessageDialog(self, message, _("Warning"), wx.YES_NO | wx.ICON_EXCLAMATION)
                 result = dialog.ShowModal()
                 dialog.Destroy()
                 if result == wx.ID_YES:
                     self.EndModal(wx.ID_OK)
             else:
-                dialog = wx.MessageDialog(
-                    self, message, _("Error"), wx.OK | wx.ICON_ERROR)
+                dialog = wx.MessageDialog(self, message, _("Error"), wx.OK | wx.ICON_ERROR)
                 dialog.ShowModal()
                 dialog.Destroy()
         else:
             self.EndModal(wx.ID_OK)
 
     def RefreshLanguage(self):
-        selection = self.POU_LANGUAGES_DICT.get(
-            self.Language.GetStringSelection(), "")
+        selection = self.POU_LANGUAGES_DICT.get(self.Language.GetStringSelection(), "")
         self.Language.Clear()
         for language in self.POU_LANGUAGES:
             if language != "SFC" or self.POU_TYPES_DICT[self.PouType.GetStringSelection()] != "function":
@@ -204,8 +197,7 @@ class PouDialog(wx.Dialog):
         self.PouNames = [pou_name.upper() for pou_name in pou_names]
 
     def SetPouElementNames(self, element_names):
-        self.PouElementNames = [element_name.upper()
-                                for element_name in element_names]
+        self.PouElementNames = [element_name.upper() for element_name in element_names]
 
     def SetValues(self, values):
         for item, value in values.items():

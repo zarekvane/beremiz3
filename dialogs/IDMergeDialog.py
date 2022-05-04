@@ -3,27 +3,27 @@
 
 # See COPYING file for copyrights details.
 
-
+# 
 import wx
 
 
 # class RichMessageDialog is still not available in wxPython 3.0.2
 class IDMergeDialog(wx.Dialog):
     def __init__(self, parent, title, question, optiontext, button_texts):
-        super().__init__(parent, title=title)
+        wx.Dialog.__init__(self, parent, title=title)
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         message = wx.StaticText(self, label=question)
         main_sizer.Add(message, border=20,
-                             flag=wx.ALIGN_CENTER_HORIZONTAL | wx.TOP | wx.LEFT | wx.RIGHT)
+                       flag=wx.ALIGN_CENTER_HORIZONTAL | wx.TOP | wx.LEFT | wx.RIGHT)
 
         self.check = wx.CheckBox(self, label=optiontext)
         main_sizer.Add(self.check, border=20,
-                             flag=wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL)
+                       flag=wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL)
 
         buttons_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        for label, wxID in zip(button_texts, [wx.ID_YES, wx.ID_NO, wx.ID_CANCEL]):
+        for label, wxID in list(zip(button_texts, [wx.ID_YES, wx.ID_NO, wx.ID_CANCEL])):
             Button = wx.Button(self, label=label)
 
             def OnButtonFactory(_wxID):

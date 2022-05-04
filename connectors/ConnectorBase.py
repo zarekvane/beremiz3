@@ -3,11 +3,9 @@
 
 # See COPYING file for copyrights details.
 
-
 import hashlib
 
-
-class ConnectorBase:
+class ConnectorBase(object):
 
     chuncksize = 1024*1024
 

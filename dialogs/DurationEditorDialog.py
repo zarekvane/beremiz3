@@ -39,8 +39,7 @@ MINUTE = 60 * SECOND
 HOUR = 60 * MINUTE
 DAY = 24 * HOUR
 
-IEC_TIME_MODEL = re.compile(
-    r"(?:T|TIME)#(-)?(?:(%(float)s)D_?)?(?:(%(float)s)H_?)?(?:(%(float)s)M(?!S)_?)?(?:(%(float)s)S_?)?(?:(%(float)s)MS)?$" % {"float": r"[0-9]+(?:\.[0-9]+)?"})
+IEC_TIME_MODEL = re.compile(r"(?:T|TIME)#(-)?(?:(%(float)s)D_?)?(?:(%(float)s)H_?)?(?:(%(float)s)M(?!S)_?)?(?:(%(float)s)S_?)?(?:(%(float)s)MS)?$" % {"float": r"[0-9]+(?:\.[0-9]+)?"})
 
 
 # -------------------------------------------------------------------------------
@@ -51,7 +50,7 @@ IEC_TIME_MODEL = re.compile(
 class DurationEditorDialog(wx.Dialog):
 
     def __init__(self, parent):
-        super().__init__(parent, title=_('Edit Duration'))
+        wx.Dialog.__init__(self, parent, title=_('Edit Duration'))
 
         CONTROLS = [
             ("Days", _('Days:')),
@@ -66,10 +65,9 @@ class DurationEditorDialog(wx.Dialog):
         main_sizer.AddGrowableCol(0)
         main_sizer.AddGrowableRow(0)
 
-        controls_sizer = wx.FlexGridSizer(
-            cols=len(CONTROLS), hgap=10, rows=2, vgap=10)
+        controls_sizer = wx.FlexGridSizer(cols=len(CONTROLS), hgap=10, rows=2, vgap=10)
         main_sizer.Add(controls_sizer, border=20,
-                            flag=wx.TOP | wx.LEFT | wx.RIGHT | wx.GROW)
+                       flag=wx.TOP | wx.LEFT | wx.RIGHT | wx.GROW)
 
         controls = []
         for i, (name, label) in enumerate(CONTROLS):
@@ -91,8 +89,7 @@ class DurationEditorDialog(wx.Dialog):
             controls_sizer.Add(txtctrl, flag=wx.GROW)
 
         button_sizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.CENTRE)
-        self.Bind(wx.EVT_BUTTON, self.OnOK,
-                  button_sizer.GetAffirmativeButton())
+        # self.Bind(wx.EVT_BUTTON, self.OnOK, button_sizer.GetAffirmativeButton())
         main_sizer.Add(button_sizer, border=20,
                             flag=wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT)
 
@@ -114,8 +111,7 @@ class DurationEditorDialog(wx.Dialog):
             milliseconds = values[5]
             if milliseconds is not None:
                 self.Milliseconds.SetValue("%d" % int(float(milliseconds)))
-                self.Microseconds.SetValue(
-                    "%.3f" % ((float(milliseconds) % MILLISECONDS) / MICROSECONDS))
+                self.Microseconds.SetValue("%.3f" % ((float(milliseconds) % MILLISECONDS) / MICROSECONDS))
             else:
                 self.Milliseconds.SetValue("0")
                 self.Microseconds.SetValue("0")
@@ -125,8 +121,7 @@ class DurationEditorDialog(wx.Dialog):
             try:
                 float(control.GetValue())
             except ValueError:
-                message = wx.MessageDialog(self, _(
-                    "Invalid value!\nYou must fill a numeric value."), _("Error"), wx.OK | wx.ICON_ERROR)
+                message = wx.MessageDialog(self, _("Invalid value!\nYou must fill a numeric value."), _("Error"), wx.OK | wx.ICON_ERROR)
                 message.ShowModal()
                 message.Destroy()
             event.Skip()
@@ -152,8 +147,7 @@ class DurationEditorDialog(wx.Dialog):
                 duration += format % value
                 not_null = True
 
-        duration += ("%f" % (milliseconds % SECOND)
-                     ).rstrip("0").rstrip(".") + "ms"
+        duration += ("%f" % (milliseconds % SECOND)).rstrip("0").rstrip(".") + "ms"
         return duration
 
     def OnOK(self, event):
@@ -162,8 +156,7 @@ class DurationEditorDialog(wx.Dialog):
     def OnCloseDialog(self):
         errors = []
         for control, name in [(self.Days, _("days")), (self.Hours, _("hours")),
-                              (self.Minutes, _("minutes")
-                               ), (self.Seconds, _("seconds")),
+                              (self.Minutes, _("minutes")), (self.Seconds, _("seconds")),
                               (self.Milliseconds, _("milliseconds")),
                               (self.Microseconds, _("microseconds"))]:
             try:
@@ -174,10 +167,8 @@ class DurationEditorDialog(wx.Dialog):
             if len(errors) == 1:
                 message = _("Field %s hasn't a valid value!") % errors[0]
             else:
-                message = _(
-                    "Fields %s haven't a valid value!") % ",".join(errors)
-            dialog = wx.MessageDialog(
-                self, message, _("Error"), wx.OK | wx.ICON_ERROR)
+                message = _("Fields %s haven't a valid value!") % ",".join(errors)
+            dialog = wx.MessageDialog(self, message, _("Error"), wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()
             dialog.Destroy()
         else:

@@ -33,7 +33,7 @@ from controls.CustomToolTip import CustomToolTip, TOOLTIP_WAIT_PERIOD
 # -------------------------------------------------------------------------------
 
 
-class ToolTipProducer:
+class ToolTipProducer(object):
     """
     Class that implements an element that generate Tool Tip
     """
@@ -93,8 +93,9 @@ class ToolTipProducer:
         # Save Tool Tip position
         self.ToolTipPos = pos
         # Start Tool tip firing timer
-        self.ToolTipTimer.Start(int(TOOLTIP_WAIT_PERIOD * 1000),
-                                oneShot=True)
+        self.ToolTipTimer.Start(
+            int(TOOLTIP_WAIT_PERIOD * 1000),
+            oneShot=True)
 
     def SetToolTipText(self, text):
         """

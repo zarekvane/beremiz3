@@ -26,8 +26,9 @@
 
 import wx
 
-from graphics.SFC_Objects import SFC_Step
 from dialogs.BlockPreviewDialog import BlockPreviewDialog
+from graphics.SFC_Objects import SFC_Step
+
 
 # -------------------------------------------------------------------------------
 #                         Set SFC Step Parameters Dialog
@@ -48,8 +49,8 @@ class SFCStepDialog(BlockPreviewDialog):
         @param tagname: Tagname of project POU edited
         @param initial: True if step is initial (default: False)
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Edit Step'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Edit Step'))
 
         # Init common sizers
         self._init_sizers(2, 0, 6, None, 2, 1)
@@ -173,7 +174,7 @@ class SFCStepDialog(BlockPreviewDialog):
         self.RefreshPreview()
         event.Skip()
 
-    def RefreshPreview(self):
+    def DrawPreview(self):
         """
         Refresh preview panel of graphic element
         Override BlockPreviewDialog function
@@ -191,4 +192,4 @@ class SFCStepDialog(BlockPreviewDialog):
                 getattr(self.Element, "Remove" + name.capitalize())()
 
         # Call BlockPreviewDialog function
-        BlockPreviewDialog.RefreshPreview(self)
+        BlockPreviewDialog.DrawPreview(self)

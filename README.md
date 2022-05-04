@@ -1,6 +1,7 @@
 # Beremiz rewritten with python3.10 and wxpython4
 
-this project is forked from the editor part of 'OpenPLC_Editror', and is rewritten with python3.10.
+this project is forked from the editor part of [OpenPLC_Editror](https://github.com/thiagoralves/OpenPLC_Editor), and is rewritten with python3.
+
 
 ## needed python library
 
@@ -9,28 +10,13 @@ this project is forked from the editor part of 'OpenPLC_Editror', and is rewritt
 - zeroconf
 - pyserial
 - gnosis
-- compiler
 - simplejson
 - nevow
 - pyjamas
 
-## run this program
 
-```bash
+# run this program
+
+```python
 python -B Beremiz.py
-```
-
-## Problem
-
-There are a lot of bugs. 
-
-When creating project, the project object has none attribute 'fileHeaders'.
-
-After my trial, I found that it failed to load object and generate some function from xml file, but I don't konw why.
-
-My system os is Arch Linux:
-
-```bash
-pacman -S python python-pip
-pacman -S wxpython
 ```

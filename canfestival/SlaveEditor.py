@@ -22,26 +22,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import wx
-
-from subindextable import EditingPanel
 from nodeeditortemplate import NodeEditorTemplate
+from subindextable import EditingPanel
+
 from editors.ConfTreeNodeEditor import ConfTreeNodeEditor
 
-# _init_coll_ConfNodeMenu_Items
 [
     ID_SLAVEEDITORCONFNODEMENUNODEINFOS, ID_SLAVEEDITORCONFNODEMENUDS301PROFILE,
     ID_SLAVEEDITORCONFNODEMENUDS302PROFILE, ID_SLAVEEDITORCONFNODEMENUDSOTHERPROFILE,
     ID_SLAVEEDITORCONFNODEMENUADD,
-] = map(int, wx.NewIdRef(5))
+] = [wx.NewIdRef() for _init_coll_ConfNodeMenu_Items in list(range(5))]
 
-# _init_coll_AddMenu_Items
 [
     ID_SLAVEEDITORADDMENUSDOSERVER, ID_SLAVEEDITORADDMENUSDOCLIENT,
     ID_SLAVEEDITORADDMENUPDOTRANSMIT, ID_SLAVEEDITORADDMENUPDORECEIVE,
     ID_SLAVEEDITORADDMENUMAPVARIABLE, ID_SLAVEEDITORADDMENUUSERTYPE,
-] = map(int, wx.NewIdRef(6))
+] = [wx.NewIdRef() for _init_coll_AddMenu_Items in list(range(6))]
 
 
 class SlaveEditor(ConfTreeNodeEditor, NodeEditorTemplate):
@@ -75,7 +72,7 @@ class SlaveEditor(ConfTreeNodeEditor, NodeEditorTemplate):
                 other_profile_text = _("%s Profile") % profile
                 add_menu.append((wx.ITEM_SEPARATOR, None))
                 for text, _indexes in self.Manager.GetCurrentSpecificMenu():
-                    add_menu.append((wx.ITEM_NORMAL, (text, wx.NewId(), '', self.GetProfileCallBack(text))))
+                    add_menu.append((wx.ITEM_NORMAL, (text, wx.NewIdRef(), '', self.GetProfileCallBack(text))))
             else:
                 other_profile_text = _('Other Profile')
 
@@ -109,7 +106,7 @@ class MasterViewer(SlaveEditor):
     SHOW_PARAMS = False
 
     def __init__(self, parent, controler, window, tagname):
-        super().__init__(parent, controler, window, False)
+        SlaveEditor.__init__(self, parent, controler, window, False)
 
         self.TagName = tagname
 

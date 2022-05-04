@@ -3,9 +3,9 @@
 
 # See COPYING file for copyrights details.
 
+import json
 import os
 import time
-import json
 from zipfile import ZipFile
 
 # PSK Management Data model :

@@ -3,9 +3,8 @@
 
 # See COPYING file for copyrights details.
 
-
-
 from functools import partial
+
 import wx
 
 from controls.IDBrowser import IDBrowser
@@ -14,7 +13,7 @@ from controls.IDBrowser import IDBrowser
 class SchemeEditor(wx.Panel):
     def __init__(self, scheme, parent, *args, **kwargs):
         self.txtctrls = {}
-        super().__init__(parent, *args, **kwargs)
+        wx.Panel.__init__(self, parent, *args, **kwargs)
 
         self.fieldsizer = wx.FlexGridSizer(cols=2, hgap=10, vgap=10)
 

@@ -23,11 +23,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+
 import wx
 
-from graphics.GraphicCommons import CONNECTOR, CONTINUATION
-from graphics.FBD_Objects import FBD_Connector
 from dialogs.BlockPreviewDialog import BlockPreviewDialog
+from graphics.FBD_Objects import FBD_Connector
+from graphics.GraphicCommons import CONNECTOR, CONTINUATION
+
 
 # -------------------------------------------------------------------------------
 #                       Set Connection Parameters Dialog
@@ -49,8 +51,8 @@ class ConnectionDialog(BlockPreviewDialog):
         @param apply_button: Enable button for applying connector modification
         to all connector having the same name in POU (default: False)
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Connection Properties'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Connection Properties'))
 
         # Init common sizers
         self._init_sizers(2, 0, 7, 1, 0, None)
@@ -91,7 +93,7 @@ class ConnectionDialog(BlockPreviewDialog):
         self.MainSizer.Add(
             self.ButtonSizer, border=20,
             flag=wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT)
-        self.ColumnSizer.RemoveSizer(self.RightGridSizer)
+        self.ColumnSizer.Remove(self.RightGridSizer)
 
         # Add button for applying connection name modification to all connection
         # of POU
@@ -208,7 +210,7 @@ class ConnectionDialog(BlockPreviewDialog):
         self.RefreshPreview()
         event.Skip()
 
-    def RefreshPreview(self):
+    def DrawPreview(self):
         """
         Refresh preview panel of graphic element
         Override BlockPreviewDialog function
@@ -219,4 +221,4 @@ class ConnectionDialog(BlockPreviewDialog):
                                      self.ConnectionName.GetValue())
 
         # Call BlockPreviewDialog function
-        BlockPreviewDialog.RefreshPreview(self)
+        BlockPreviewDialog.DrawPreview(self)

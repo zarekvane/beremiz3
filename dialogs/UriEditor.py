@@ -1,6 +1,5 @@
-
-
 import wx
+
 from connectors import ConnectorSchemes, EditorClassFromScheme
 from controls.DiscoveryPanel import DiscoveryPanel
 
@@ -30,16 +29,20 @@ class UriEditor(wx.Dialog):
 
     def __init__(self, parent, ctr, uri=''):
         self.ctr = ctr
-        super().__init__(name='UriEditor', parent=parent,
+        wx.Dialog.__init__(self,
+                           name='UriEditor', parent=parent,
                            title=_('URI Editor'))
         self.choices = [_("- Search local network -")] + ConnectorSchemes()
         self._init_ctrls(parent)
         self._init_sizers()
         self.scheme = None
         self.scheme_editor = None
-        self.SetURI(uri)
+        self.SetURI('')
         self.CenterOnParent()
 
+    def close(self):
+        if self.scheme_editor:
+            self.scheme_editor.close()
     def OnTypeChoice(self, event):
         index = event.GetSelection()
         self._replaceSchemeEditor(event.GetString() if index > 0 else None)

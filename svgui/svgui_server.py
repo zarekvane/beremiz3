@@ -23,12 +23,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
 import os
 from builtins import str as text
 
-from nevow import tags, loaders
 import simplejson as json  # pylint: disable=import-error
+from nevow import tags, loaders
+
 import runtime.NevowServer as NS
 
 svgfile = '%(svgfile)s'
@@ -44,7 +44,7 @@ def getNewId():
     return currentId
 
 
-class SvguiWidget:
+class SvguiWidget(object):
 
     def __init__(self, classname, id, **kwargs):
         self.classname = classname
@@ -122,7 +122,7 @@ class SVGUI_HMI(website.PLCHMI):
 
     def HMIinitialisation(self):
         gadgets = []
-        for gadget in svguiWidgets.values():
+        for gadget in list(svguiWidgets.values()):
             gadgets.append(text(json.dumps(gadget, default=get_object_init_state, indent=2), 'ascii'))
         d = self.callRemote('init', gadgets)
         d.addCallback(self.HMIinitialised)

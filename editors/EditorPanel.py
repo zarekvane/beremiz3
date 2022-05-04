@@ -23,8 +23,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+
+
 import wx
-from PLCControler import PLCControler
+
 from controls.VariablePanel import VariablePanel
 
 
@@ -44,8 +46,7 @@ class EditorPanel(wx.SplitterWindow):
         self._init_MenuItems()
 
         if self.VARIABLE_PANEL_TYPE is not None:
-            self.VariableEditor = VariablePanel(
-                self, self, self.Controler, self.VARIABLE_PANEL_TYPE, self.Debug)
+            self.VariableEditor = VariablePanel(self, self, self.Controler, self.VARIABLE_PANEL_TYPE, self.Debug)
             self.VariableEditor.SetTagName(self.TagName)
         else:
             self.VariableEditor = None
@@ -59,9 +60,9 @@ class EditorPanel(wx.SplitterWindow):
         elif self.Editor is not None:
             self.Initialize(self.Editor)
 
-    def __init__(self, parent, tagname, window: wx.Window | None, controler: PLCControler, debug=False):
-        super().__init__(parent,
-                         style=wx.SUNKEN_BORDER | wx.SP_3D)
+    def __init__(self, parent, tagname, window, controler, debug=False):
+        wx.SplitterWindow.__init__(self, parent,
+                                   style=wx.SUNKEN_BORDER | wx.SP_3D)
 
         self.ParentWindow = window
         self.Controler = controler
@@ -162,8 +163,7 @@ class EditorPanel(wx.SplitterWindow):
 
     def RemoveHighlight(self, infos, start, end, highlight_type):
         if self.VariableEditor is not None and infos[0] in ["var_local", "var_input", "var_output", "var_inout"]:
-            self.VariableEditor.RemoveVariableHighlight(
-                infos[1:], highlight_type)
+            self.VariableEditor.RemoveVariableHighlight(infos[1:], highlight_type)
 
     def ClearHighlights(self, highlight_type=None):
         if self.VariableEditor is not None:

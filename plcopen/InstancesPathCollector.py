@@ -3,18 +3,18 @@
 # This file is part of Beremiz.
 # See COPYING file for copyrights details.
 
-
+# 
 from plcopen.XSLTModelQuery import XSLTModelQuery
 
 
 class InstancesPathCollector(XSLTModelQuery):
     """ object for collecting instances path list"""
-
     def __init__(self, controller):
         self.Instances = []
-        super().__init__(controller,
-                         "instances_path.xslt",
-                         [("AddInstance", self.AddInstance)])
+        XSLTModelQuery.__init__(self,
+                                controller,
+                                "instances_path.xslt",
+                                [("AddInstance", self.AddInstance)])
 
     def AddInstance(self, context, *args):
         self.Instances.append(args[0][0])

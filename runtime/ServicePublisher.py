@@ -22,17 +22,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
+# 
 
 
 import socket
 import threading
-import zeroconf
 
+import zeroconf
 
 service_type = '_Beremiz._tcp.local.'
 
 
-class ServicePublisher:
+class ServicePublisher(object):
     def __init__(self, protocol):
         # type: fully qualified service type name
         self.serviceproperties = {

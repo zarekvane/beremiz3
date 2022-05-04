@@ -23,7 +23,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
 import wx
 import wx.grid
 
@@ -40,7 +39,7 @@ class CustomTable(wx.grid.GridTableBase):
     """
     def __init__(self, parent, data, colnames):
         # The base class must be initialized *first*
-        super().__init__()
+        wx.grid.GridTableBase.__init__(self)
         self.data = data
         self.colnames = colnames
         self.Highlights = {}
@@ -204,9 +203,9 @@ class CustomTable(wx.grid.GridTableBase):
         if highlight_type is None:
             self.Highlights = {}
         else:
-            for _row, row_highlights in self.Highlights.items():
+            for _row, row_highlights in list(self.Highlights.items()):
                 row_items = row_highlights.items()
-                for col, col_highlights in row_items:
+                for col, col_highlights in list(row_items):
                     if highlight_type in col_highlights:
                         col_highlights.remove(highlight_type)
                     if len(col_highlights) == 0:

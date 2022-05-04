@@ -20,10 +20,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
-
 import wx
-
 
 class CommentEditDialog(wx.Dialog):
     """
@@ -49,7 +46,7 @@ class CommentEditDialog(wx.Dialog):
             Minimal size of text control is limited
             by (100,100)
         """
-        super().__init__(parent, title=_("Please enter comment text"))
+        wx.Dialog.__init__(self, parent, title=_("Please enter comment text"))
         msg_label = wx.StaticText(self, label=_("Edit comment"))
         input_size = wx.Size(max(size[0], 100), max(size[1], 100))
         input = wx.TextCtrl(self, style=wx.TE_MULTILINE)

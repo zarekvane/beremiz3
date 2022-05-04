@@ -26,14 +26,14 @@
 import wx
 
 from util.BitmapLibrary import GetBitmap
-import wxpatch
+
 
 # -------------------------------------------------------------------------------
 #                        Custom button for Graphic Viewer Class
 # -------------------------------------------------------------------------------
 
 
-class GraphButton:
+class GraphButton(object):
     """
     Class that implements a custom button for graphic Viewer
     """
@@ -81,13 +81,13 @@ class GraphButton:
         # Button size is size of bitmap
         return self.Bitmap.GetSize()
 
-    def SetPosition(self, x: int, y: int):
+    def SetPosition(self, x, y):
         """
         Set button position
         @param x: X coordinate of Button in Graphic Viewer
         @param y: Y coordinate of Button in Graphic Viewer
         """
-        self.Position = wxpatch.Point(x, y)
+        self.Position = wx.Point(x, y)
 
     def Show(self, show=True):
         """
@@ -145,7 +145,7 @@ class GraphButton:
 
         # Test if point is inside button
         w, h = self.Bitmap.GetSize()
-        rect = wxpatch.Rect(self.Position.x, self.Position.y, w, h)
+        rect = wx.Rect(self.Position.x, self.Position.y, w, h)
         return rect.Contains(x, y)
 
     def ProcessCallback(self):

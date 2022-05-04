@@ -1,9 +1,9 @@
-
 import sys
+
 import gluon.contrib.simplejson as simplejson
 
 
-class JSONRPCServiceBase:
+class JSONRPCServiceBase(object):
 
     def __init__(self):
         self.methods = {}
@@ -41,4 +41,4 @@ class JSONRPCServiceBase:
             return self.error(id, 100, 'method "%s" does not exist' % method)
 
     def listmethods(self):
-        return self.methods.keys()
+        return list(self.methods.keys())

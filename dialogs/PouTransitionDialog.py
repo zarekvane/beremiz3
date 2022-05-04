@@ -24,11 +24,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
 import wx
 
 from plcopen.structures import TestIdentifier, IEC_KEYWORDS
 from util.TranslationCatalogs import NoTranslate
+
 
 # -------------------------------------------------------------------------------
 #                                POU Transition Dialog
@@ -42,7 +42,7 @@ def GetTransitionLanguages():
 
 class PouTransitionDialog(wx.Dialog):
     def __init__(self, parent):
-        super().__init__(parent, title=_('Create a new transition'))
+        wx.Dialog.__init__(self, parent, title=_('Create a new transition'))
 
         self.TRANSITION_LANGUAGES_DICT = dict([(_(language), language)
                                                for language in GetTransitionLanguages()])
@@ -54,24 +54,24 @@ class PouTransitionDialog(wx.Dialog):
         infos_sizer = wx.FlexGridSizer(cols=2, hgap=5, rows=3, vgap=10)
         infos_sizer.AddGrowableCol(1)
         main_sizer.Add(infos_sizer, border=20,
-                            flag=wx.GROW | wx.TOP | wx.LEFT | wx.RIGHT)
+                       flag=wx.GROW | wx.TOP | wx.LEFT | wx.RIGHT)
 
         transitionname_label = wx.StaticText(self, label=_('Transition Name:'))
         infos_sizer.Add(transitionname_label, border=4,
-                              flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
+                        flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
 
         self.TransitionName = wx.TextCtrl(self, size=wx.Size(180, -1))
         infos_sizer.Add(self.TransitionName, flag=wx.GROW)
 
         language_label = wx.StaticText(self, label=_('Language:'))
         infos_sizer.Add(language_label, border=4,
-                              flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
+                        flag=wx.ALIGN_CENTER_VERTICAL | wx.TOP)
 
         self.Language = wx.ComboBox(self, style=wx.CB_READONLY)
         infos_sizer.Add(self.Language, flag=wx.GROW)
 
         button_sizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.CENTRE)
-        self.Bind(wx.EVT_BUTTON, self.OnOK, button_sizer.GetAffirmativeButton())
+        # self.Bind(wx.EVT_BUTTON, self.OnOK, button_sizer.GetAffirmativeButton())
         main_sizer.Add(button_sizer, border=20, flag=wx.ALIGN_RIGHT | wx.BOTTOM)
 
         self.SetSizer(main_sizer)

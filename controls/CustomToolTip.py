@@ -22,11 +22,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import wx
 
 from controls.CustomStyledTextCtrl import faces
-import wxpatch
 
 TOOLTIP_MAX_CHARACTERS = 30  # Maximum number of characters by line in ToolTip
 TOOLTIP_MAX_LINE = 5         # Maximum number of line in ToolTip
@@ -50,7 +48,7 @@ class CustomToolTip(wx.PopupWindow):
         @param restricted: Tool tip must follow size restriction in line and
             characters number defined (default True)
         """
-        super().__init__(parent)
+        wx.PopupWindow.__init__(self, parent)
 
         self.Restricted = restricted
 
@@ -109,7 +107,7 @@ class CustomToolTip(wx.PopupWindow):
                     self.Tip[-1] += "..."
                 else:
                     self.Tip[-1] = self.Tip[-1][:TOOLTIP_MAX_CHARACTERS - 3] + \
-                        "..."
+                                   "..."
         else:
             self.Tip = tip.splitlines()
 
@@ -126,8 +124,9 @@ class CustomToolTip(wx.PopupWindow):
 
         # Calculate position of tool tip to stay in screen limits
         tip_width, tip_height = self.GetToolTipSize()
-        self.SetPosition(wxpatch.Point(max(0, min(pos.x, screen_width - tip_width)),
-                                  max(0, min(pos.y, screen_height - tip_height))))
+        self.SetPosition(wx.Point(
+            max(0, min(pos.x, screen_width - tip_width)),
+            max(0, min(pos.y, screen_height - tip_height))))
 
     def GetToolTipSize(self):
         """
@@ -175,11 +174,11 @@ class CustomToolTip(wx.PopupWindow):
         dc.SetFont(self.Font)
 
         # Draw Tool tip
-        dc.BeginDrawing()
+        # dc.BeginDrawing()
         tip_width, tip_height = self.GetToolTipSize()
 
         # Draw background rectangle
-        wxpatch.DrawRectangle(dc, 0, 0, tip_width, tip_height)
+        dc.DrawRectangle(0, 0, tip_width, tip_height)
 
         # Draw tool tip text
         line_offset = 0
@@ -188,6 +187,6 @@ class CustomToolTip(wx.PopupWindow):
             _line_width, line_height = dc.GetTextExtent(line)
             line_offset += line_height
 
-        dc.EndDrawing()
+        # dc.EndDrawing()
 
         event.Skip()

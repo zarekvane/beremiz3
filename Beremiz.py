@@ -22,61 +22,22 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
+import getopt
 import os
 import sys
-import getopt
+import traceback
 
 import wx
-import wx.adv
+from wx.lib.agw.advancedsplash import AdvancedSplash, AS_NOTIMEOUT, AS_CENTER_ON_SCREEN
+from util.misc import execfile
 
 import util.paths as paths
 
 
-class Splash(wx.adv.SplashScreen):
-    def __init__(self, app, bitmap,
-                 splashStyle=wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_NO_TIMEOUT,
-                 milliseconds=3000,
-                 parent=None,
-                 id=wx.ID_ANY,
-                 pos=wx.DefaultPosition,
-                 size=wx.DefaultSize,
-                 style=wx.BORDER_SIMPLE | wx.FRAME_NO_TASKBAR | wx.STAY_ON_TOP):
-
-        super().__init__(bitmap=bitmap, splashStyle=splashStyle,
-                         milliseconds=milliseconds, parent=parent,
-                         id=id, pos=pos, size=size, style=style)
-        self.app = app
-        self.Painted = False
-
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-        self.timer = wx.Timer(self)
-        self.timer.Start(2000)
-
-        self.Bind(wx.EVT_TIMER, self.OnTimeOut, self.timer)
-
-    def OnTimeOut(self, event: wx.TimerEvent):
-        self.Close()
-
-    def OnClose(self, event: wx.CloseEvent):
-        event.Skip()
-        self.Hide()
-
-        if self.timer.IsRunning():
-            # Stop the gauge timer.
-            self.timer.Stop()
-
-        if not self.Painted:
-            self.Painted = True
-            wx.CallAfter(self.app.AppStart)
-
-
-class BeremizApp(wx.App):
-    def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
-        super().__init__(redirect, filename, useBestVisual, clearSigInt)
-        super().SetAppName("beremiz")
-        self.frame: wx.Frame = None
+class BeremizIDELauncher(object):
+    def __init__(self):
+        self.app = None
+        self.frame = None
         self.updateinfo_url = None
         self.extensions = []
         self.app_dir = paths.AbsDir(__file__)
@@ -118,8 +79,7 @@ class BeremizApp(wx.App):
     def ProcessCommandLineArgs(self):
         self.SetCmdOptions()
         try:
-            opts, args = getopt.getopt(
-                sys.argv[1:], self.shortCmdOpts, self.longCmdOpts)
+            opts, args = getopt.getopt(sys.argv[1:], self.shortCmdOpts, self.longCmdOpts)
         except getopt.GetoptError:
             # print help information and exit:
             self.Usage()
@@ -139,9 +99,33 @@ class BeremizApp(wx.App):
             self.projectOpen = args[0]
             self.buildpath = args[1]
 
+    def CreateApplication(self):
+
+        BeremizAppType = wx.App if wx.VERSION >= (3, 0, 0) else wx.PySimpleApp
+
+        class BeremizApp(BeremizAppType):
+            def OnInit(_self):  # pylint: disable=no-self-argument
+                self.ShowSplashScreen()
+                return True
+
+        self.app = BeremizApp(redirect=self.debug)
+        self.app.SetAppName('beremiz')
+        if wx.VERSION < (3, 0, 0):
+            wx.InitAllImageHandlers()
+
     def ShowSplashScreen(self):
+        class Splash(AdvancedSplash):
+            Painted = False
+
+            def OnPaint(_self, event):  # pylint: disable=no-self-argument
+                AdvancedSplash.OnPaint(_self, event)
+                if not _self.Painted:  # trigger app start only once
+                    _self.Painted = True
+                    wx.CallAfter(self.AppStart)
         bmp = wx.Image(self.splashPath).ConvertToBitmap()
-        self.splash = Splash(app=self, bitmap=bmp)
+        self.splash = Splash(None,
+                             bitmap=bmp,
+                             agwStyle=AS_NOTIMEOUT | AS_CENTER_ON_SCREEN)
 
     def BackgroundInitialization(self):
         self.InitI18n()
@@ -160,9 +144,6 @@ class BeremizApp(wx.App):
         """
         return globals()
 
-    def locals(self):
-        return locals()
-
     def LoadExtensions(self):
         for extfilename in self.extensions:
             from util.TranslationCatalogs import AddCatalog
@@ -171,10 +152,7 @@ class BeremizApp(wx.App):
             sys.path.append(extension_folder)
             AddCatalog(os.path.join(extension_folder, "locale"))
             AddBitmapFolder(os.path.join(extension_folder, "images"))
-
-            with open(extfilename, "rb") as source_file:
-                code = compile(source_file.read(), extfilename, "exec")
-            exec(code, self.globals(), self.locals())
+            execfile(extfilename, self.globals())
 
     def CheckUpdates(self):
         if self.updateinfo_url is not None:
@@ -182,16 +160,12 @@ class BeremizApp(wx.App):
 
             def updateinfoproc():
                 try:
-                    from urllib import request
-                    self.updateinfo = request.urlopen(
-                        self.updateinfo_url, None).read()
+                    import urllib2
+                    self.updateinfo = urllib2.urlopen(self.updateinfo_url, None).read()
                 except Exception:
                     self.updateinfo = _("update info unavailable.")
 
             from threading import Thread
-
-            assert self.splash is not None
-
             self.splash.SetText(text=self.updateinfo)
             updateinfoThread = Thread(target=updateinfoproc)
             updateinfoThread.start()
@@ -206,24 +180,21 @@ class BeremizApp(wx.App):
     def InstallExceptionHandler(self):
         import version
         import util.ExceptionHandler
-        self.handle_exception = util.ExceptionHandler.AddExceptHook(
-            version.app_version)
+        self.handle_exception = util.ExceptionHandler.AddExceptHook(version.app_version)
 
     def CreateUI(self):
-        self.frame = self.BeremizIDE.Beremiz(
-            None, self.projectOpen, self.buildpath)
+        self.frame = self.BeremizIDE.Beremiz(None, self.projectOpen, self.buildpath)
 
     def CloseSplash(self):
         if self.splash:
             self.splash.Close()
 
     def ShowUI(self):
-        if self.frame is not None:
-            self.frame.Show()
+        self.frame.Show()
 
     def PreStart(self):
         self.ProcessCommandLineArgs()
-        self.ShowSplashScreen()
+        self.CreateApplication()
 
     def AppStart(self):
         try:
@@ -233,11 +204,16 @@ class BeremizApp(wx.App):
             self.ShowUI()
         except (KeyboardInterrupt, SystemExit):
             raise
-        except Exception:
+        except Exception as e:
+            print(e)
+            print(traceback.print_exc())
             if self.handle_exception is not None:
                 self.handle_exception(*sys.exc_info(), exit=True)
             else:
                 raise
+
+    def MainLoop(self):
+        self.app.MainLoop()
 
     def Start(self):
         self.PreStart()
@@ -246,5 +222,5 @@ class BeremizApp(wx.App):
 
 
 if __name__ == '__main__':
-    beremiz = BeremizApp()
+    beremiz = BeremizIDELauncher()
     beremiz.Start()

@@ -23,21 +23,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
+import getopt
 import os
 import sys
-import getopt
 import threading
-from threading import Thread, Semaphore, Lock, currentThread
 from builtins import str as text
+from threading import Thread, Semaphore, Lock, currentThread
+
+import builtins
 
 import runtime
-from runtime.PyroServer import PyroServer
-from runtime.xenomai import TryPreloadXenomai
+from util.misc import execfile
+import util.paths as paths
 from runtime import LogMessageAndException
 from runtime import PlcStatus
+from runtime import default_evaluator
+from runtime.PyroServer import PyroServer
 from runtime.Stunnel import ensurePSK
-import util.paths as paths
+from runtime.xenomai import TryPreloadXenomai
 
 
 def version():
@@ -67,8 +70,7 @@ Usage of Beremiz PLC execution service :\n
 
 
 try:
-    opts, argv = getopt.getopt(
-        sys.argv[1:], "i:p:n:x:t:a:w:c:e:s:h", ["help", "version"])
+    opts, argv = getopt.getopt(sys.argv[1:], "i:p:n:x:t:a:w:c:e:s:h", ["help", "version"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -219,8 +221,7 @@ if enablewx:
 
             def __init__(self, parent, message, caption=_("Please enter text"), defaultValue="",
                          style=wx.OK | wx.CANCEL | wx.CENTRE, pos=wx.DefaultPosition):
-                wx.TextEntryDialog.__init__(
-                    self, parent, message, caption, defaultValue, style, pos)
+                wx.TextEntryDialog.__init__(self, parent, message, caption, defaultValue, style, pos)
 
                 self.Tests = []
                 self.Bind(wx.EVT_BUTTON, self.OnOK, id=self.GetAffirmativeId())
@@ -230,8 +231,7 @@ if enablewx:
                 texts = {"value": value}
                 for function, message in self.Tests:
                     if not function(value):
-                        message = wx.MessageDialog(
-                            self, message % texts, _("Error"), wx.OK | wx.ICON_ERROR)
+                        message = wx.MessageDialog(self, message % texts, _("Error"), wx.OK | wx.ICON_ERROR)
                         message.ShowModal()
                         message.Destroy()
                         return
@@ -245,41 +245,31 @@ if enablewx:
                 self.Tests = tests
 
         class BeremizTaskBarIcon(wx.TaskBarIcon):
-            [
-                TBMENU_START,
-                TBMENU_STOP,
-                TBMENU_CHANGE_NAME,
-                TBMENU_CHANGE_PORT,
-                TBMENU_CHANGE_INTERFACE,
-                TBMENU_LIVE_SHELL,
-                TBMENU_WXINSPECTOR,
-                TBMENU_CHANGE_WD,
-                TBMENU_QUIT
-            ] = map(int, wx.NewIdRef(9))
+            TBMENU_START = wx.NewId()
+            TBMENU_STOP = wx.NewId()
+            TBMENU_CHANGE_NAME = wx.NewId()
+            TBMENU_CHANGE_PORT = wx.NewId()
+            TBMENU_CHANGE_INTERFACE = wx.NewId()
+            TBMENU_LIVE_SHELL = wx.NewId()
+            TBMENU_WXINSPECTOR = wx.NewId()
+            TBMENU_CHANGE_WD = wx.NewId()
+            TBMENU_QUIT = wx.NewId()
 
             def __init__(self, pyroserver):
-                super().__init__()
+                wx.TaskBarIcon.__init__(self)
                 self.pyroserver = pyroserver
                 # Set the image
                 self.UpdateIcon(None)
 
                 # bind some events
-                self.Bind(wx.EVT_MENU, self.OnTaskBarStartPLC,
-                          id=self.TBMENU_START)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarStopPLC,
-                          id=self.TBMENU_STOP)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarChangeName,
-                          id=self.TBMENU_CHANGE_NAME)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarChangeInterface,
-                          id=self.TBMENU_CHANGE_INTERFACE)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarLiveShell,
-                          id=self.TBMENU_LIVE_SHELL)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarWXInspector,
-                          id=self.TBMENU_WXINSPECTOR)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarChangePort,
-                          id=self.TBMENU_CHANGE_PORT)
-                self.Bind(wx.EVT_MENU, self.OnTaskBarChangeWorkingDir,
-                          id=self.TBMENU_CHANGE_WD)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarStartPLC, id=self.TBMENU_START)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarStopPLC, id=self.TBMENU_STOP)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarChangeName, id=self.TBMENU_CHANGE_NAME)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarChangeInterface, id=self.TBMENU_CHANGE_INTERFACE)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarLiveShell, id=self.TBMENU_LIVE_SHELL)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarWXInspector, id=self.TBMENU_WXINSPECTOR)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarChangePort, id=self.TBMENU_CHANGE_PORT)
+                self.Bind(wx.EVT_MENU, self.OnTaskBarChangeWorkingDir, id=self.TBMENU_CHANGE_WD)
                 self.Bind(wx.EVT_MENU, self.OnTaskBarQuit, id=self.TBMENU_QUIT)
 
             def CreatePopupMenu(self):
@@ -294,16 +284,12 @@ if enablewx:
                 menu.Append(self.TBMENU_STOP, _("Stop PLC"))
                 menu.AppendSeparator()
                 menu.Append(self.TBMENU_CHANGE_NAME, _("Change Name"))
-                menu.Append(self.TBMENU_CHANGE_INTERFACE, _(
-                    "Change IP of interface to bind"))
+                menu.Append(self.TBMENU_CHANGE_INTERFACE, _("Change IP of interface to bind"))
                 menu.Append(self.TBMENU_CHANGE_PORT, _("Change Port Number"))
-                menu.Append(self.TBMENU_CHANGE_WD, _(
-                    "Change working directory"))
+                menu.Append(self.TBMENU_CHANGE_WD, _("Change working directory"))
                 menu.AppendSeparator()
-                menu.Append(self.TBMENU_LIVE_SHELL, _(
-                    "Launch a live Python shell"))
-                menu.Append(self.TBMENU_WXINSPECTOR,
-                            _("Launch WX GUI inspector"))
+                menu.Append(self.TBMENU_LIVE_SHELL, _("Launch a live Python shell"))
+                menu.Append(self.TBMENU_WXINSPECTOR, _("Launch WX GUI inspector"))
                 menu.AppendSeparator()
                 menu.Append(self.TBMENU_QUIT, _("Quit"))
                 return menu
@@ -330,8 +316,7 @@ if enablewx:
             def OnTaskBarChangeInterface(self, evt):
                 ip_addr = self.pyroserver.ip_addr
                 ip_addr = '' if ip_addr is None else ip_addr
-                dlg = ParamsEntryDialog(
-                    None, _("Enter the IP of the interface to bind"), defaultValue=ip_addr)
+                dlg = ParamsEntryDialog(None, _("Enter the IP of the interface to bind"), defaultValue=ip_addr)
                 dlg.SetTests([(re.compile(r'\d{1,3}(?:\.\d{1,3}){3}$').match, _("IP is not valid!")),
                               (lambda x:len([x for x in x.split(".") if 0 <= int(x) <= 255]) == 4,
                                _("IP is not valid!"))])
@@ -340,17 +325,14 @@ if enablewx:
                     self.pyroserver.Restart()
 
             def OnTaskBarChangePort(self, evt):
-                dlg = ParamsEntryDialog(
-                    None, _("Enter a port number "), defaultValue=str(self.pyroserver.port))
-                dlg.SetTests([(text.isdigit, _("Port number must be an integer!")), (lambda port: 0 <= int(
-                    port) <= 65535, _("Port number must be 0 <= port <= 65535!"))])
+                dlg = ParamsEntryDialog(None, _("Enter a port number "), defaultValue=str(self.pyroserver.port))
+                dlg.SetTests([(text.isdigit, _("Port number must be an integer!")), (lambda port: 0 <= int(port) <= 65535, _("Port number must be 0 <= port <= 65535!"))])
                 if dlg.ShowModal() == wx.ID_OK:
                     self.pyroserver.port = int(dlg.GetValue())
                     self.pyroserver.Restart()
 
             def OnTaskBarChangeWorkingDir(self, evt):
-                dlg = wx.DirDialog(None, _(
-                    "Choose a working directory "), self.pyroserver.workdir, wx.DD_NEW_DIR_BUTTON)
+                dlg = wx.DirDialog(None, _("Choose a working directory "), self.pyroserver.workdir, wx.DD_NEW_DIR_BUTTON)
                 if dlg.ShowModal() == wx.ID_OK:
                     self.pyroserver.workdir = dlg.GetPath()
                     self.pyroserver.Restart()
@@ -358,10 +340,8 @@ if enablewx:
             def OnTaskBarChangeName(self, evt):
                 _servicename = self.pyroserver.servicename
                 _servicename = '' if _servicename is None else _servicename
-                dlg = ParamsEntryDialog(
-                    None, _("Enter a name "), defaultValue=_servicename)
-                dlg.SetTests(
-                    [(lambda name: len(name) is not 0, _("Name must not be null!"))])
+                dlg = ParamsEntryDialog(None, _("Enter a name "), defaultValue=_servicename)
+                dlg.SetTests([(lambda name: len(name) is not 0, _("Name must not be null!"))])
                 if dlg.ShowModal() == wx.ID_OK:
                     self.pyroserver.servicename = dlg.GetValue()
                     self.pyroserver.Restart()
@@ -401,14 +381,6 @@ if enablewx:
 
 if not os.path.isdir(WorkingDir):
     os.mkdir(WorkingDir)
-
-
-def default_evaluator(tocall, *args, **kwargs):
-    try:
-        res = (tocall(*args, **kwargs), None)
-    except Exception:
-        res = (None, sys.exc_info())
-    return res
 
 
 if enabletwisted:
@@ -458,11 +430,10 @@ if havewx:
         if ui_thread is not None \
             and ui_thread.ident != current_id \
             and (not havetwisted or (
-                twisted_reactor_thread_id is not None
-                and twisted_reactor_thread_id != current_id)):
+                    twisted_reactor_thread_id is not None
+                    and twisted_reactor_thread_id != current_id)):
 
-            o = type('', (object,), dict(
-                call=(tocall, args, kwargs), res=None))
+            o = type('', (object,), dict(call=(tocall, args, kwargs), res=None))
             wx.CallAfter(wx_evaluator, o)
             wx_eval_lock.acquire()
             return o.res
@@ -522,10 +493,7 @@ if havetwisted:
 # Load extensions
 for extention_file, extension_folder in extensions:
     sys.path.append(extension_folder)
-    filename = os.path.join(extension_folder, extention_file)
-    with open(filename, "rb") as source_file:
-        code = compile(source_file.read(), filename, "exec")
-    exec(code, globals(), locals())
+    execfile(os.path.join(extension_folder, extention_file), locals())
 
 # Service name is used as an ID for stunnel's PSK
 # Some extension may set 'servicename' to a computed ID or Serial Number
@@ -562,7 +530,8 @@ if havetwisted:
 pyro_thread_started = Lock()
 pyro_thread_started.acquire()
 pyro_thread = Thread(target=pyroserver.PyroLoop,
-                     kwargs=dict(when_ready=pyro_thread_started.release))
+                     kwargs=dict(when_ready=pyro_thread_started.release),
+                     name="PyroThread")
 pyro_thread.start()
 
 # Wait for pyro thread to be effective
@@ -587,7 +556,7 @@ if havetwisted or havewx:
     else:
         ui_thread_target = app.MainLoop
 
-    ui_thread = Thread(target=ui_thread_target)
+    ui_thread = Thread(target=ui_thread_target, name="UIThread")
     ui_thread.start()
 
     # This order ui loop to unblock main thread when ready.
@@ -611,9 +580,17 @@ except KeyboardInterrupt:
     pass
 
 pyroserver.Quit()
+pyro_thread.join()
 
 plcobj = runtime.GetPLCObjectSingleton()
 plcobj.StopPLC()
 plcobj.UnLoadPLC()
+
+if havetwisted:
+    reactor.stop()
+    ui_thread.join()
+elif havewx:
+    app.ExitMainLoop()
+    ui_thread.join()
 
 sys.exit(0)

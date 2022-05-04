@@ -22,26 +22,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-
-
-
 from time import time as gettime
-from cycler import cycler
 
-import numpy
-import wx
 import matplotlib
 import matplotlib.pyplot
+import numpy
+from cycler import cycler
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import _convert_agg_to_wx_bitmap
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 from mpl_toolkits.mplot3d import Axes3D
 
-
-from editors.DebugViewer import REFRESH_PERIOD
 from controls.DebugVariablePanel.DebugVariableViewer import *
 from controls.DebugVariablePanel.GraphButton import GraphButton
-import wxpatch
+from editors.DebugViewer import REFRESH_PERIOD
+
 
 
 # Graph variable display type
@@ -118,7 +113,7 @@ class DebugVariableGraphicDropTarget(wx.TextDropTarget):
         @param parent: Reference to Debug Variable Graphic Viewer
         @param window: Reference to the Debug Variable Panel
         """
-        super().__init__()
+        wx.TextDropTarget.__init__(self)
         self.ParentControl = parent
         self.ParentWindow = window
 
@@ -174,14 +169,14 @@ class DebugVariableGraphicDropTarget(wx.TextDropTarget):
 
             # If mouse is dropped in graph canvas bounding box and graph is
             # not 3D canvas, graphs will be merged
-            rect: wx.Rect = self.ParentControl.GetAxesBoundingBox()
+            rect = self.ParentControl.GetAxesBoundingBox()
             if not self.ParentControl.Is3DCanvas() and rect.Contains(x, y):
                 # Default merge type is parallel
                 merge_type = GRAPH_PARALLEL
 
                 # If mouse is dropped in left part of graph canvas, graph
                 # wall be merged orthogonally
-                merge_rect = wxpatch.Rect(rect.x, rect.y,
+                merge_rect = wx.Rect(rect.x, rect.y,
                                      rect.width / 2., rect.height)
                 if merge_rect.Contains(x, y):
                     merge_type = GRAPH_ORTHOGONAL
@@ -307,9 +302,9 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
             GraphButton(0, 0, "fit_graph", self.OnZoomFitButton))
 
         # Add buttons for changing canvas size with predefined height
-        for size, bitmap in zip(
+        for size, bitmap in list(zip(
                 [SIZE_MINI, SIZE_MIDDLE, SIZE_MAXI],
-                ["minimize_graph", "middle_graph", "maximize_graph"]):
+                ["minimize_graph", "middle_graph", "maximize_graph"])):
             self.Buttons.append(GraphButton(0, 0, bitmap,
                                             self.GetOnChangeSizeButton(size)))
 
@@ -328,7 +323,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         Add an item to the list of items displayed by Viewer
         @param item: Item to add to the list
         """
-        DebugVariableViewer.AddItem(self, item)
+        DebugVariableViewer.Add(self, item)
         self.ResetGraphics()
 
     def RemoveItem(self, item):
@@ -566,7 +561,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         """
         start_tick, end_tick = self.ParentWindow.GetRange()
         cursor_tick = None
-        items = self.ItemsDict.values()
+        items = list(self.ItemsDict.values())
 
         # Graph is orthogonal
         if self.GraphType == GRAPH_ORTHOGONAL:
@@ -624,7 +619,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
                          [pair for pair in enumerate(self.Labels)]):
                 # Get label bounding box
                 (x0, y0), (x1, y1) = t.get_window_extent().get_points()
-                rect = wxpatch.Rect(x0, height - y1, x1 - x0, y1 - y0)
+                rect = wx.Rect(x0, height - y1, x1 - x0, y1 - y0)
                 # Check if mouse was over label
                 if rect.Contains(x, y):
                     item_idx = i
@@ -640,7 +635,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
                 # parent
                 xw, yw = self.GetPosition()
                 self.ParentWindow.StartDragNDrop(
-                    self, self.ItemsDict.values()[item_idx],
+                    self, list(self.ItemsDict.values())[item_idx],
                     x + xw, y + yw,  # Current mouse position
                     x + xw, y + yw)  # Mouse position when button was clicked
 
@@ -648,7 +643,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
             # the default behavior (rotate 3D axes)
             elif not self.Is3DCanvas():
                 # Save mouse position when clicked
-                self.MouseStartPos = wxpatch.Point(x, y)
+                self.MouseStartPos = wx.Point(x, y)
 
                 # Mouse button was left button, start moving cursor
                 if event.button == 1:
@@ -666,7 +661,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         # Mouse was clicked outside graph figure and over resize highlight with
         # left button, start resizing Viewer
         elif event.button == 1 and event.y <= 5:
-            self.MouseStartPos = wxpatch.Point(x, y)
+            self.MouseStartPos = wx.Point(x, y)
             self.CanvasStartSize = height
 
     def OnCanvasButtonReleased(self, event):
@@ -678,7 +673,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         if self.ParentWindow.IsDragging():
             _width, height = self.GetSize()
             xw, yw = self.GetPosition()
-            item = self.ParentWindow.DraggingAxesPanel.ItemsDict.values()[0]
+            item = list(self.ParentWindow.DraggingAxesPanel.ItemsDict.values())[0]
             # Give mouse position in wx coordinate of parent
             self.ParentWindow.StopDragNDrop(item.GetVariable(),
                                             xw + event.x, yw + height - event.y)
@@ -729,13 +724,13 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
             # Find if mouse is over an item label
             item_idx = None
             menu_direction = None
-            for (i, t), dir in zip(
+            for (i, t), dir in list(zip(
                     [pair for pair in enumerate(self.AxesLabels)] +
                     [pair for pair in enumerate(self.Labels)],
-                    directions):
+                    directions)):
                 # Check every label paired with corresponding item
                 (x0, y0), (x1, y1) = t.get_window_extent().get_points()
-                rect = wxpatch.Rect(x0, height - y1, x1 - x0, y1 - y0)
+                rect = wx.Rect(x0, height - y1, x1 - x0, y1 - y0)
                 # Check if mouse was over label
                 if rect.Contains(event.x, height - event.y):
                     item_idx = i
@@ -745,7 +740,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
             # If mouse is over an item label,
             if item_idx is not None:
                 self.PopupContextualButtons(
-                    self.ItemsDict.values()[item_idx],
+                    list(self.ItemsDict.values())[item_idx],
                     rect, menu_direction)
                 return
 
@@ -757,7 +752,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
             # Update resize highlight
             if event.y <= 5:
                 if self.SetHighlight(HIGHLIGHT_RESIZE):
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
+                    self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
                     self.ParentWindow.ForceRefresh()
             else:
                 if self.SetHighlight(HIGHLIGHT_NONE):
@@ -783,7 +778,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
                     xw, yw = self.GetPosition()
                     self.ParentWindow.SetCursorTick(self.StartCursorTick)
                     self.ParentWindow.StartDragNDrop(
-                        self, self.ItemsDict.values()[0],
+                        self, list(self.ItemsDict.values())[0],
                         # Current mouse position
                         event.x + xw, height - event.y + yw,
                         # Mouse position when button was clicked
@@ -906,7 +901,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         # figure comparing to wx panel
         width, height = self.GetSize()
         ax, ay, aw, ah = self.figure.gca().get_position().bounds
-        bbox = wxpatch.Rect(ax * width, height - (ay + ah) * height - 1,
+        bbox = wx.Rect(ax * width, height - (ay + ah) * height - 1,
                        aw * width + 2, ah * height + 1)
 
         # If parent_coordinate, add Viewer position in parent
@@ -928,7 +923,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         # Mouse is over Viewer figure and graph is not 3D
         bbox = self.GetAxesBoundingBox()
         if bbox.Contains(x, y) and not self.Is3DCanvas():
-            rect = wxpatch.Rect(bbox.x, bbox.y, bbox.width // 2, bbox.height)
+            rect = wx.Rect(bbox.x, bbox.y, bbox.width // 2, bbox.height)
             # Mouse is over Viewer left part of figure
             if rect.Contains(x, y):
                 self.SetHighlight(HIGHLIGHT_LEFT)
@@ -1188,7 +1183,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
                 # each variable
                 start_tick = max(start_tick, self.GetItemsMinCommonTick())
                 end_tick = max(end_tick, start_tick)
-                items = self.ItemsDict.values()
+                items = list(self.ItemsDict.values())
 
                 # Get data and range for first variable (X coordinate)
                 x_data, x_min, x_max = items[0].GetDataAndValueRange(
@@ -1330,7 +1325,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
             item.GetValue(self.CursorTick)
             if self.CursorTick is not None
             else (item.GetValue(), item.IsForced())) for item in self.Items]
-        values, forced = zip(*args)
+        values, forced = list(zip(*args))
 
         # Get path of each variable displayed simplified using panel variable
         # name mask
@@ -1338,7 +1333,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
                   for item in self.Items]
 
         # Get style for each variable according to
-        styles = map(lambda x: {True: 'italic', False: 'normal'}[x], forced)
+        styles = list(map(lambda x: {True: 'italic', False: 'normal'}[x], forced))
 
         # Graph is orthogonal 3D, set variables path as 3D axis label
         if self.Is3DCanvas():
@@ -1350,12 +1345,12 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
 
         # Graph is not orthogonal 3D, set variables path in axes labels
         else:
-            for label, text in zip(self.AxesLabels, labels):
+            for label, text in list(zip(self.AxesLabels, labels)):
                 label.set_text(text)
 
         # Set value label text and style according to value and forced flag for
         # each variable displayed
-        for label, value, style in zip(self.Labels, values, styles):
+        for label, value, style in list(zip(self.Labels, values, styles)):
             label.set_text(value)
             label.set_style(style)
 
@@ -1382,7 +1377,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         # rendering
         destGC = wx.GCDC(destDC)
 
-        destGC.BeginDrawing()
+        # destGC.BeginDrawing()
 
         # Get canvas size and figure bounding box in canvas
         width, height = self.GetSize()
@@ -1410,7 +1405,7 @@ class DebugVariableGraphicViewer(DebugVariableViewer, FigureCanvas):
         # Draw other Viewer common elements
         self.DrawCommonElements(destGC, self.GetButtons())
 
-        destGC.EndDrawing()
+        # destGC.EndDrawing()
 
         self._isDrawn = True
         self.gui_repaint(drawDC=drawDC)

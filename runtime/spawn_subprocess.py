@@ -5,14 +5,16 @@
 
 
 
+# 
 import os
 import signal
+
 import posix_spawn
 
 PIPE = "42"
 
 
-class Popen:
+class Popen(object):
     def __init__(self, args, stdin=None, stdout=None):
         self.returncode = None
         self.stdout = None

@@ -24,12 +24,8 @@
 
 
 
-
-
-import wx
-
-
 from editors.Viewer import *
+
 
 
 def ExtractNextBlocks(block, block_list):
@@ -174,7 +170,7 @@ class LD_Viewer(Viewer):
     """
 
     def __init__(self, parent, tagname, window, controler, debug=False, instancepath=""):
-        super().__init__(parent, tagname, window, controler, debug, instancepath)
+        Viewer.__init__(self, parent, tagname, window, controler, debug, instancepath)
         self.Rungs = []
         self.RungComments = []
         self.CurrentLanguage = "LD"
@@ -300,7 +296,7 @@ class LD_Viewer(Viewer):
             return Viewer.SearchElements(self, bbox)
 
         elements = []
-        for element in self.Blocks.values() + self.Comments.values():
+        for element in list(self.Blocks.values()) + list(self.Comments.values()):
             if element.IsInSelection(bbox):
                 elements.append(element)
         return elements
@@ -767,8 +763,8 @@ class LD_Viewer(Viewer):
                         infos["rights"].remove(right_element)
                         if "LD_PowerRail" not in infos["rights"]:
                             infos["rights"].append("LD_PowerRail")
-                infos["lefts"].sort()
-                infos["rights"].sort()
+                sorted(infos["lefts"])
+                sorted(infos["rights"])
             lefts = blocks_infos[0]["lefts"]
             rights = blocks_infos[0]["rights"]
             good = True
@@ -1157,10 +1153,10 @@ class LD_Viewer(Viewer):
                 if block in block_list:
                     wires = wire.EndConnected.GetWires()
                     endmiddlepoint = wires[0][0].StartConnected.GetPosition(False)[0] - LD_WIRE_SIZE
-                    points = [startpoint, wxpatch.Point(middlepoint, startpoint.y),
-                              wxpatch.Point(middlepoint, startpoint.y + offset),
-                              wxpatch.Point(endmiddlepoint, startpoint.y + offset),
-                              wxpatch.Point(endmiddlepoint, endpoint.y), endpoint]
+                    points = [startpoint, wx.Point(middlepoint, startpoint.y),
+                              wx.Point(middlepoint, startpoint.y + offset),
+                              wx.Point(endmiddlepoint, startpoint.y + offset),
+                              wx.Point(endmiddlepoint, endpoint.y), endpoint]
                 else:
                     if startpoint.y + offset != endpoint.y:
                         if isinstance(element, LD_PowerRail):
@@ -1172,8 +1168,8 @@ class LD_Viewer(Viewer):
                             self.RefreshPosition(block, False)
                         endpoint = wire.EndConnected.GetPosition(False)
                     if not onlyone[i]:
-                        points = [startpoint, wxpatch.Point(middlepoint, startpoint.y),
-                                  wxpatch.Point(middlepoint, endpoint.y), endpoint]
+                        points = [startpoint, wx.Point(middlepoint, startpoint.y),
+                                  wx.Point(middlepoint, endpoint.y), endpoint]
                     else:
                         points = [startpoint, endpoint]
                 wire.SetPoints(points, False)

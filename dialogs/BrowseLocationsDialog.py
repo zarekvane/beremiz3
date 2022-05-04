@@ -23,13 +23,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.#
 
-
 import wx
 
+from PLCControler import LOCATION_CONFNODE, LOCATION_MODULE, LOCATION_GROUP, LOCATION_VAR_INPUT, LOCATION_VAR_OUTPUT, \
+    LOCATION_VAR_MEMORY
 from plcopen.structures import LOCATIONDATATYPES
-from PLCControler import LOCATION_CONFNODE, LOCATION_MODULE, LOCATION_GROUP, LOCATION_VAR_INPUT, LOCATION_VAR_OUTPUT, LOCATION_VAR_MEMORY
 from util.BitmapLibrary import GetBitmap
 from util.TranslationCatalogs import NoTranslate
+
 
 # -------------------------------------------------------------------------------
 #                                   Helpers
@@ -65,8 +66,8 @@ for size, types in LOCATIONDATATYPES.items():
 class BrowseLocationsDialog(wx.Dialog):
 
     def __init__(self, parent, var_type, controller):
-        super().__init__(parent, title=_('Browse Locations'),
-                         style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, parent, title=_('Browse Locations'),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
         self.DIRFILTERCHOICE_OPTIONS = dict(
             [(_(option), filter) for option, filter in GetDirFilterChoiceOptions()])
@@ -76,7 +77,7 @@ class BrowseLocationsDialog(wx.Dialog):
 
         locations_label = wx.StaticText(self, label=_('Locations available:'))
         main_sizer.Add(locations_label, border=20,
-                             flag=wx.TOP | wx.LEFT | wx.RIGHT | wx.GROW)
+                       flag=wx.TOP | wx.LEFT | wx.RIGHT | wx.GROW)
 
         self.LocationsTree = wx.TreeCtrl(self,
                                          style=(wx.TR_HAS_BUTTONS |
@@ -88,46 +89,44 @@ class BrowseLocationsDialog(wx.Dialog):
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnLocationsTreeItemActivated,
                   self.LocationsTree)
         main_sizer.Add(self.LocationsTree, border=20,
-                             flag=wx.LEFT | wx.RIGHT | wx.GROW)
+                       flag=wx.LEFT | wx.RIGHT | wx.GROW)
 
-        self.RenameCheckBox = wx.CheckBox(
-            self, label=_("Rename variable to signal name"))
+        self.RenameCheckBox = wx.CheckBox(self, label=_("Rename variable to signal name"))
         self.Config = wx.ConfigBase.Get()
-        default_checked = self.Config.Read(
-            "RenameVariableOnLocationChange") == "True"
+        default_checked = self.Config.Read("RenameVariableOnLocationChange").encode() == "True"
         self.RenameCheckBox.SetValue(default_checked)
         self.do_rename = default_checked
 
         main_sizer.Add(self.RenameCheckBox, border=20,
-                             flag=wx.LEFT | wx.RIGHT | wx.GROW)
+                       flag=wx.LEFT | wx.RIGHT | wx.GROW)
 
         button_gridsizer = wx.FlexGridSizer(cols=5, hgap=5, rows=1, vgap=0)
         button_gridsizer.AddGrowableCol(1)
         button_gridsizer.AddGrowableCol(3)
         button_gridsizer.AddGrowableRow(0)
         main_sizer.Add(button_gridsizer, border=20,
-                            flag=wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.GROW)
+                       flag=wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.GROW)
 
         direction_label = wx.StaticText(self, label=_('Direction:'))
         button_gridsizer.Add(direction_label,
-                                   flag=wx.ALIGN_CENTER_VERTICAL)
+                             flag=wx.ALIGN_CENTER_VERTICAL)
 
         self.DirFilterChoice = wx.ComboBox(self, style=wx.CB_READONLY)
         self.Bind(wx.EVT_COMBOBOX, self.OnFilterChoice, self.DirFilterChoice)
         button_gridsizer.Add(self.DirFilterChoice,
-                                   flag=wx.GROW | wx.ALIGN_CENTER_VERTICAL)
+                             flag=wx.GROW | wx.ALIGN_CENTER_VERTICAL)
 
         filter_label = wx.StaticText(self, label=_('Type:'))
         button_gridsizer.Add(filter_label,
-                                   flag=wx.ALIGN_CENTER_VERTICAL)
+                             flag=wx.ALIGN_CENTER_VERTICAL)
 
         self.TypeFilterChoice = wx.ComboBox(self, style=wx.CB_READONLY)
         self.Bind(wx.EVT_COMBOBOX, self.OnFilterChoice, self.TypeFilterChoice)
         button_gridsizer.Add(self.TypeFilterChoice,
-                                   flag=wx.GROW | wx.ALIGN_CENTER_VERTICAL)
+                             flag=wx.GROW | wx.ALIGN_CENTER_VERTICAL)
 
-        button_sizer: wx.Sizer = super().CreateButtonSizer(wx.OK | wx.CANCEL | wx.CENTRE)
-        self.Bind(wx.EVT_BUTTON, self.OnOK, wx.FindWindowById(wx.ID_OK, self))
+        button_sizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.CENTRE)
+        # self.Bind(wx.EVT_BUTTON, self.OnOK, button_sizer.GetAffirmativeButton())
         button_gridsizer.Add(button_sizer, flag=wx.ALIGN_RIGHT)
 
         self.SetSizer(main_sizer)
@@ -150,8 +149,7 @@ class BrowseLocationsDialog(wx.Dialog):
                 ("VAR_INPUT",     LOCATION_VAR_INPUT),
                 ("VAR_OUTPUT",    LOCATION_VAR_OUTPUT),
                 ("VAR_LOCAL",     LOCATION_VAR_MEMORY)]:
-            self.TreeImageDict[itemtype] = self.TreeImageList.Add(
-                GetBitmap(imgname))
+            self.TreeImageDict[itemtype] = self.TreeImageList.Add(GetBitmap(imgname))
 
         # Assign icon list to TreeCtrls
         self.LocationsTree.SetImageList(self.TreeImageList)
@@ -169,8 +167,7 @@ class BrowseLocationsDialog(wx.Dialog):
         self.Fit()
 
     def RefreshFilters(self):
-        self.DirFilter = self.DIRFILTERCHOICE_OPTIONS[self.DirFilterChoice.GetStringSelection(
-        )]
+        self.DirFilter = self.DIRFILTERCHOICE_OPTIONS[self.DirFilterChoice.GetStringSelection()]
         self.TypeFilter = self.TypeFilterChoice.GetSelection()
 
     def RefreshLocationsTree(self):
@@ -204,25 +201,21 @@ class BrowseLocationsDialog(wx.Dialog):
                 if not item.IsOk():
                     item = self.LocationsTree.AppendItem(root, infos["name"])
                     if wx.Platform != '__WXMSW__':
-                        item, root_cookie = self.LocationsTree.GetNextChild(
-                            root, root_cookie)
+                        item, root_cookie = self.LocationsTree.GetNextChild(root, root_cookie)
                 else:
                     self.LocationsTree.SetItemText(item, infos["name"])
-                self.LocationsTree.SetPyData(item, infos)
-                self.LocationsTree.SetItemImage(
-                    item, self.TreeImageDict[infos["type"]])
+                self.LocationsTree.SetItemData(item, infos)
+                self.LocationsTree.SetItemImage(item, self.TreeImageDict[infos["type"]])
                 self.GenerateLocationsTreeBranch(item, children)
-                item, root_cookie = self.LocationsTree.GetNextChild(
-                    root, root_cookie)
+                item, root_cookie = self.LocationsTree.GetNextChild(root, root_cookie)
         while item.IsOk():
             to_delete.append(item)
-            item, root_cookie = self.LocationsTree.GetNextChild(
-                root, root_cookie)
+            item, root_cookie = self.LocationsTree.GetNextChild(root, root_cookie)
         for item in to_delete:
             self.LocationsTree.Delete(item)
 
     def OnLocationsTreeItemActivated(self, event):
-        infos = self.LocationsTree.GetPyData(event.GetItem())
+        infos = self.LocationsTree.GetItemData(event.GetItem())
         if infos["type"] not in [LOCATION_CONFNODE, LOCATION_MODULE, LOCATION_GROUP]:
             wx.CallAfter(self.EndModal, wx.ID_OK)
         event.Skip()
@@ -233,22 +226,22 @@ class BrowseLocationsDialog(wx.Dialog):
 
     def GetValues(self):
         selected = self.LocationsTree.GetSelection()
-        infos = self.LocationsTree.GetPyData(selected)
+        if selected.GetID() is None:
+            return None
+        infos = self.LocationsTree.GetItemData(selected)
         if not self.do_rename:
             infos["var_name"] = None
         return infos
 
     def OnOK(self, event):
         self.do_rename = self.RenameCheckBox.IsChecked()
-        self.Config.Write("RenameVariableOnLocationChange",
-                          str(self.do_rename))
+        self.Config.Write("RenameVariableOnLocationChange", str(self.do_rename))
         selected = self.LocationsTree.GetSelection()
         var_infos = None
         if selected.IsOk():
-            var_infos = self.LocationsTree.GetPyData(selected)
+            var_infos = self.LocationsTree.GetItemData(selected)
         if var_infos is None or var_infos["type"] in [LOCATION_CONFNODE, LOCATION_MODULE, LOCATION_GROUP]:
-            dialog = wx.MessageDialog(
-                self, _("A location must be selected!"), _("Error"), wx.OK | wx.ICON_ERROR)
+            dialog = wx.MessageDialog(self, _("A location must be selected!"), _("Error"), wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()
             dialog.Destroy()
         else:

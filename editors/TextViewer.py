@@ -23,21 +23,21 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+
 import re
 from functools import reduce
 
 import wx
 import wx.stc
 
-
-from graphics.GraphicCommons import ERROR_HIGHLIGHT, SEARCH_RESULT_HIGHLIGHT, REFRESH_HIGHLIGHT_PERIOD
-from plcopen.structures import ST_BLOCK_START_KEYWORDS, IEC_BLOCK_START_KEYWORDS, LOCATIONDATATYPES
-from editors.EditorPanel import EditorPanel
 from controls.CustomStyledTextCtrl import CustomStyledTextCtrl, faces, GetCursorPos
-
+from editors.EditorPanel import EditorPanel
 # -------------------------------------------------------------------------------
 #                         Textual programs Viewer class
 # -------------------------------------------------------------------------------
+from graphics.GraphicCommons import ERROR_HIGHLIGHT
+from graphics.GraphicCommons import SEARCH_RESULT_HIGHLIGHT, REFRESH_HIGHLIGHT_PERIOD
+from plcopen.structures import ST_BLOCK_START_KEYWORDS, IEC_BLOCK_START_KEYWORDS, LOCATIONDATATYPES
 
 
 NEWLINE = "\n"
@@ -47,18 +47,15 @@ for i in range(26):
     LETTERS.append(chr(ord('a') + i))
     LETTERS.append(chr(ord('A') + i))
 
-[
-    STC_PLC_WORD, STC_PLC_COMMENT, STC_PLC_NUMBER, STC_PLC_STRING,
-    STC_PLC_VARIABLE, STC_PLC_PARAMETER, STC_PLC_FUNCTION, STC_PLC_JUMP,
-    STC_PLC_ERROR, STC_PLC_SEARCH_RESULT,
-    STC_PLC_EMPTY
-] = range(11)
-
+[STC_PLC_WORD, STC_PLC_COMMENT, STC_PLC_NUMBER, STC_PLC_STRING,
+ STC_PLC_VARIABLE, STC_PLC_PARAMETER, STC_PLC_FUNCTION, STC_PLC_JUMP,
+ STC_PLC_ERROR, STC_PLC_SEARCH_RESULT,
+ STC_PLC_EMPTY] = range(11)
 [SPACE, WORD, NUMBER, STRING, WSTRING, COMMENT, PRAGMA, DPRAGMA] = range(8)
 
 [
     ID_TEXTVIEWER, ID_TEXTVIEWERTEXTCTRL,
-] = [wx.NewId() for _init_ctrls in range(2)]
+] = [wx.NewIdRef() for _init_ctrls in range(2)]
 
 re_texts = {}
 re_texts["letter"] = "[A-Za-z]"
@@ -69,17 +66,16 @@ LABEL_MODEL = re.compile("[ \t\n]%(identifier)s:[ \t\n]" % re_texts)
 EXTENSIBLE_PARAMETER = re.compile("IN[1-9][0-9]*$")
 
 HIGHLIGHT_TYPES = {
-    ERROR_HIGHLIGHT: STC_PLC_ERROR,
     SEARCH_RESULT_HIGHLIGHT: STC_PLC_SEARCH_RESULT,
+    ERROR_HIGHLIGHT: STC_PLC_ERROR,
 }
 
 
 def LineStartswith(line, symbols):
-    return reduce(lambda x, y: x or y, map(line.startswith, symbols), False)
+    return reduce(lambda x, y: x or y, list(map(line.startswith, symbols)), False)
 
 
 class TextViewer(EditorPanel):
-
     ID = ID_TEXTVIEWER
 
     def _init_Editor(self, prnt):
@@ -87,45 +83,31 @@ class TextViewer(EditorPanel):
                                            parent=prnt, name="TextViewer", size=wx.Size(0, 0), style=0)
         self.Editor.ParentWindow = self
 
-        self.Editor.CmdKeyAssign(
-            ord('+'), wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_ZOOMIN)
-        self.Editor.CmdKeyAssign(
-            ord('-'), wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_ZOOMOUT)
+        self.Editor.CmdKeyAssign(ord('+'), wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_ZOOMIN)
+        self.Editor.CmdKeyAssign(ord('-'), wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_ZOOMOUT)
 
         self.Editor.SetViewWhiteSpace(False)
 
         self.Editor.SetLexer(wx.stc.STC_LEX_CONTAINER)
 
         # Global default styles for all languages
-        self.Editor.StyleSetSpec(
-            wx.stc.STC_STYLE_DEFAULT, "face:%(mono)s,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT, "face:%(mono)s,size:%(size)d" % faces)
         self.Editor.StyleClearAll()  # Reset all to be like the default
 
-        self.Editor.StyleSetSpec(
-            wx.stc.STC_STYLE_LINENUMBER,  "back:#C0C0C0,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER, "back:#C0C0C0,size:%(size)d" % faces)
         self.Editor.SetSelBackground(1, "#E0E0E0")
 
         # Highlighting styles
-        self.Editor.StyleSetSpec(
-            STC_PLC_WORD, "fore:#00007F,bold,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_VARIABLE, "fore:#7F0000,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_PARAMETER, "fore:#7F007F,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_FUNCTION, "fore:#7F7F00,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_COMMENT, "fore:#7F7F7F,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_NUMBER, "fore:#007F7F,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_STRING, "fore:#007F00,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_JUMP, "fore:#FF7FFF,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_ERROR, "fore:#FF0000,back:#FFFF00,size:%(size)d" % faces)
-        self.Editor.StyleSetSpec(
-            STC_PLC_SEARCH_RESULT, "fore:#FFFFFF,back:#FFA500,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_WORD, "fore:#00007F,bold,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_VARIABLE, "fore:#7F0000,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_PARAMETER, "fore:#7F007F,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_FUNCTION, "fore:#7F7F00,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_COMMENT, "fore:#7F7F7F,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_NUMBER, "fore:#007F7F,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_STRING, "fore:#007F00,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_JUMP, "fore:#FF7FFF,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_ERROR, "fore:#FF0000,back:#FFFF00,size:%(size)d" % faces)
+        self.Editor.StyleSetSpec(STC_PLC_SEARCH_RESULT, "fore:#FFFFFF,back:#FFA500,size:%(size)d" % faces)
 
         # Indicators styles
         self.Editor.IndicatorSetStyle(0, wx.stc.STC_INDIC_SQUIGGLE)
@@ -139,20 +121,14 @@ class TextViewer(EditorPanel):
         self.Editor.SetMarginWidth(1, 50)
 
         # Folding
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDEROPEN,
-                                 wx.stc.STC_MARK_BOXMINUS,          "white", "#808080")
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDER,
-                                 wx.stc.STC_MARK_BOXPLUS,           "white", "#808080")
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERSUB,
-                                 wx.stc.STC_MARK_VLINE,             "white", "#808080")
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERTAIL,
-                                 wx.stc.STC_MARK_LCORNER,           "white", "#808080")
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDEREND,
-                                 wx.stc.STC_MARK_BOXPLUSCONNECTED,  "white", "#808080")
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDEROPENMID,
-                                 wx.stc.STC_MARK_BOXMINUSCONNECTED, "white", "#808080")
-        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERMIDTAIL,
-                                 wx.stc.STC_MARK_TCORNER,           "white", "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDEROPEN, wx.stc.STC_MARK_BOXMINUS, "white", "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDER, wx.stc.STC_MARK_BOXPLUS, "white", "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERSUB, wx.stc.STC_MARK_VLINE, "white", "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERTAIL, wx.stc.STC_MARK_LCORNER, "white", "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDEREND, wx.stc.STC_MARK_BOXPLUSCONNECTED, "white", "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDEROPENMID, wx.stc.STC_MARK_BOXMINUSCONNECTED, "white",
+                                 "#808080")
+        self.Editor.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERMIDTAIL, wx.stc.STC_MARK_TCORNER, "white", "#808080")
 
         # Indentation size
         self.Editor.SetTabWidth(2)
@@ -162,24 +138,20 @@ class TextViewer(EditorPanel):
                                     wx.stc.STC_MOD_BEFOREDELETE |
                                     wx.stc.STC_PERFORMED_USER)
 
-        self.Bind(wx.stc.EVT_STC_STYLENEEDED,
-                  self.OnStyleNeeded, id=ID_TEXTVIEWERTEXTCTRL)
+        self.Bind(wx.stc.EVT_STC_STYLENEEDED, self.OnStyleNeeded, id=ID_TEXTVIEWERTEXTCTRL)
         self.Editor.Bind(wx.stc.EVT_STC_MARGINCLICK, self.OnMarginClick)
         self.Editor.Bind(wx.stc.EVT_STC_UPDATEUI, self.OnUpdateUI)
         self.Editor.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         if self.Controler is not None:
             self.Editor.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
-            self.Bind(wx.stc.EVT_STC_DO_DROP, self.OnDoDrop,
-                      id=ID_TEXTVIEWERTEXTCTRL)
-            self.Bind(wx.stc.EVT_STC_MODIFIED, self.OnModification,
-                      id=ID_TEXTVIEWERTEXTCTRL)
+            self.Bind(wx.stc.EVT_STC_DO_DROP, self.OnDoDrop, id=ID_TEXTVIEWERTEXTCTRL)
+            self.Bind(wx.stc.EVT_STC_MODIFIED, self.OnModification, id=ID_TEXTVIEWERTEXTCTRL)
 
     def __init__(self, parent, tagname, window, controler, debug=False, instancepath=""):
         if tagname != "" and controler is not None:
-            self.VARIABLE_PANEL_TYPE = controler.GetPouType(
-                tagname.split("::")[1])
+            self.VARIABLE_PANEL_TYPE = controler.GetPouType(tagname.split("::")[1])
 
-        super().__init__(parent, tagname, window, controler, debug)
+        EditorPanel.__init__(self, parent, tagname, window, controler, debug)
 
         self.Keywords = []
         self.Variables = {}
@@ -198,8 +170,7 @@ class TextViewer(EditorPanel):
         self.ResetSearchResults()
 
         self.RefreshHighlightsTimer = wx.Timer(self, -1)
-        self.Bind(wx.EVT_TIMER, self.OnRefreshHighlightsTimer,
-                  self.RefreshHighlightsTimer)
+        self.Bind(wx.EVT_TIMER, self.OnRefreshHighlightsTimer, self.RefreshHighlightsTimer)
 
     def __del__(self):
         self.RefreshHighlightsTimer.Stop()
@@ -233,7 +204,8 @@ class TextViewer(EditorPanel):
         self.Editor.Colourise(start, end)
 
     def StartStyling(self, pos, mask):
-        self.Editor.StartStyling(pos, mask)
+        # self.Editor.StartStyling(pos, mask)
+        self.Editor.StartStyling(pos)
 
     def SetStyling(self, length, style):
         self.Editor.SetStyling(length, style)
@@ -286,8 +258,8 @@ class TextViewer(EditorPanel):
                     blockinputs = None
                 if values[1] != "function":
                     if blockname == "":
-                        dialog = wx.TextEntryDialog(self.ParentWindow, _("Block name"), _(
-                            "Please enter a block name"), "", wx.OK | wx.CANCEL | wx.CENTRE)
+                        dialog = wx.TextEntryDialog(self.ParentWindow, _("Block name"), _("Please enter a block name"),
+                                                    "", wx.OK | wx.CANCEL | wx.CENTRE)
                         if dialog.ShowModal() == wx.ID_OK:
                             blockname = dialog.GetValue()
                         else:
@@ -296,26 +268,23 @@ class TextViewer(EditorPanel):
                         dialog.Destroy()
                     if blockname.upper() in [name.upper() for name in self.Controler.GetProjectPouNames(self.Debug)]:
                         message = _("\"%s\" pou already exists!") % blockname
-                    elif blockname.upper() in [name.upper() for name in self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
-                        message = _(
-                            "\"%s\" element for this pou already exists!") % blockname
+                    elif blockname.upper() in [name.upper() for name in
+                                               self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
+                        message = _("\"%s\" element for this pou already exists!") % blockname
                     else:
-                        self.Controler.AddEditedElementPouVar(
-                            self.TagName, values[0], blockname)
+                        self.Controler.AddEditedElementPouVar(self.TagName, values[0], blockname)
                         self.RefreshVariablePanel()
                         self.RefreshVariableTree()
-                blockinfo = self.Controler.GetBlockType(
-                    blocktype, blockinputs, self.Debug)
+                blockinfo = self.Controler.GetBlockType(blocktype, blockinputs, self.Debug)
                 hint = ',\n    '.join(
-                    [" " + fctdecl[0]+" := (*"+fctdecl[1]+"*)" for fctdecl in blockinfo["inputs"]] +
-                    [" " + fctdecl[0]+" => (*"+fctdecl[1]+"*)" for fctdecl in blockinfo["outputs"]])
+                    [" " + fctdecl[0] + " := (*" + fctdecl[1] + "*)" for fctdecl in blockinfo["inputs"]] +
+                    [" " + fctdecl[0] + " => (*" + fctdecl[1] + "*)" for fctdecl in blockinfo["outputs"]])
                 if values[1] == "function":
-                    event.SetDragText(blocktype+"(\n    "+hint+")")
+                    event.SetDragText(blocktype + "(\n    " + hint + ")")
                 else:
-                    event.SetDragText(blockname+"(\n    "+hint+")")
+                    event.SetDragText(blockname + "(\n    " + hint + ")")
             elif values[1] == "location":
-                _pou_name, pou_type = self.Controler.GetEditedElementType(
-                    self.TagName, self.Debug)
+                _pou_name, pou_type = self.Controler.GetEditedElementType(self.TagName, self.Debug)
                 if len(values) > 2 and pou_type == "program":
                     var_name = values[3]
                     dlg = wx.TextEntryDialog(
@@ -329,9 +298,9 @@ class TextViewer(EditorPanel):
                         return
                     elif var_name.upper() in [name.upper() for name in self.Controler.GetProjectPouNames(self.Debug)]:
                         message = _("\"%s\" pou already exists!") % var_name
-                    elif var_name.upper() in [name.upper() for name in self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
-                        message = _(
-                            "\"%s\" element for this pou already exists!") % var_name
+                    elif var_name.upper() in [name.upper() for name in
+                                              self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
+                        message = _("\"%s\" element for this pou already exists!") % var_name
                     else:
                         location = values[0]
                         if not location.startswith("%"):
@@ -358,8 +327,7 @@ class TextViewer(EditorPanel):
                         if values[2] is not None:
                             var_type = values[2]
                         else:
-                            var_type = LOCATIONDATATYPES.get(
-                                location[2], ["BOOL"])[0]
+                            var_type = LOCATIONDATATYPES.get(location[2], ["BOOL"])[0]
                         self.Controler.AddEditedElementPouVar(
                             self.TagName,
                             var_type, var_name,
@@ -370,8 +338,7 @@ class TextViewer(EditorPanel):
                 else:
                     event.SetDragText("")
             elif values[1] == "NamedConstant":
-                _pou_name, pou_type = self.Controler.GetEditedElementType(
-                    self.TagName, self.Debug)
+                _pou_name, pou_type = self.Controler.GetEditedElementType(self.TagName, self.Debug)
                 if pou_type == "program":
                     initval = values[0]
                     var_name = values[3]
@@ -388,7 +355,8 @@ class TextViewer(EditorPanel):
                         message = _("\"%s\" pou already exists!") % var_name
                     else:
                         var_type = values[2]
-                        if not var_name.upper() in [name.upper() for name in self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
+                        if not var_name.upper() in [name.upper() for name in
+                                                    self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
                             self.Controler.AddEditedElementPouVar(self.TagName,
                                                                   var_type,
                                                                   var_name,
@@ -410,9 +378,9 @@ class TextViewer(EditorPanel):
                 elif var_name.upper() in [name.upper() for name in self.Controler.GetProjectPouNames(self.Debug)]:
                     message = _("\"%s\" pou already exists!") % var_name
                 else:
-                    if not var_name.upper() in [name.upper() for name in self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
-                        self.Controler.AddEditedElementPouExternalVar(
-                            self.TagName, values[2], var_name)
+                    if not var_name.upper() in [name.upper() for name in
+                                                self.Controler.GetEditedElementVariables(self.TagName, self.Debug)]:
+                        self.Controler.AddEditedElementPouExternalVar(self.TagName, values[2], var_name)
                         self.RefreshVariablePanel()
                         self.RefreshVariableTree()
                     event.SetDragText(var_name)
@@ -425,8 +393,7 @@ class TextViewer(EditorPanel):
             else:
                 message = _("Variable don't belong to this POU!")
             if message is not None:
-                dialog = wx.MessageDialog(
-                    self, message, _("Error"), wx.OK | wx.ICON_ERROR)
+                dialog = wx.MessageDialog(self, message, _("Error"), wx.OK | wx.ICON_ERROR)
                 dialog.ShowModal()
                 dialog.Destroy()
                 event.SetDragText("")
@@ -455,8 +422,7 @@ class TextViewer(EditorPanel):
 
     def RefreshJumpList(self):
         if self.TextSyntax == "IL":
-            self.Jumps = [jump.upper()
-                          for jump in LABEL_MODEL.findall(self.GetText())]
+            self.Jumps = [jump.upper() for jump in LABEL_MODEL.findall(self.GetText())]
 
     # Buffer the last model state
     def RefreshBuffer(self):
@@ -508,8 +474,7 @@ class TextViewer(EditorPanel):
             line = self.Editor.GetFirstVisibleLine()
             column = self.Editor.GetXOffset()
             old_text = self.GetText()
-            new_text = self.Controler.GetEditedElementText(
-                self.TagName, self.Debug)
+            new_text = self.Controler.GetEditedElementText(self.TagName, self.Debug)
             if old_text != new_text:
                 self.SetText(new_text)
                 new_cursor_pos = GetCursorPos(old_text, new_text)
@@ -524,24 +489,24 @@ class TextViewer(EditorPanel):
 
             self.RefreshVariableTree()
 
-            self.TypeNames = [typename.upper() for typename in self.Controler.GetDataTypes(
-                self.TagName, True, self.Debug)]
-            self.EnumeratedValues = [
-                value.upper() for value in self.Controler.GetEnumeratedDataValues()]
+            self.TypeNames = [typename.upper() for typename in
+                              self.Controler.GetDataTypes(self.TagName, True, self.Debug)]
+            self.EnumeratedValues = [value.upper() for value in self.Controler.GetEnumeratedDataValues()]
 
             self.Functions = {}
             for category in self.Controler.GetBlockTypes(self.TagName, self.Debug):
                 for blocktype in category["list"]:
                     blockname = blocktype["name"].upper()
-                    if blocktype["type"] == "function" and blockname not in self.Keywords and blockname not in self.Variables.keys():
+                    if blocktype["type"] == "function" and blockname not in self.Keywords and blockname not in list(
+                            self.Variables.keys()):
                         interface = dict(
-                            [(name, {}) for name, _type, _modifier in blocktype["inputs"] + blocktype["outputs"] if name != ''])
+                            [(name, {}) for name, _type, _modifier in blocktype["inputs"] + blocktype["outputs"] if
+                             name != ''])
                         for param in ["EN", "ENO"]:
                             if param not in interface:
                                 interface[param] = {}
                         if blockname in self.Functions:
-                            self.Functions[blockname]["interface"].update(
-                                interface)
+                            self.Functions[blockname]["interface"].update(interface)
                             self.Functions[blockname]["extensible"] |= blocktype["extensible"]
                         else:
                             self.Functions[blockname] = {"interface": interface,
@@ -557,12 +522,13 @@ class TextViewer(EditorPanel):
             self.Controler.GetEditedElementInterfaceVars(
                 self.TagName, True, self.Debug)
         ])
-        if self.Controler.GetEditedElementType(self.TagName, self.Debug)[1] == "function" or words[0] == "T" and self.TextSyntax == "IL":
-            return_type, (var_tree, _var_dimension) = self.Controler.GetEditedElementInterfaceReturnType(
-                self.TagName, True, self.Debug)
+        if self.Controler.GetEditedElementType(self.TagName, self.Debug)[1] == "function" or words[
+            0] == "T" and self.TextSyntax == "IL":
+            return_type, (var_tree, _var_dimension) = self.Controler.GetEditedElementInterfaceReturnType(self.TagName,
+                                                                                                         True,
+                                                                                                         self.Debug)
             if return_type is not None:
-                self.Variables[words[-1].upper()
-                               ] = self.GenerateVariableTree(var_tree)
+                self.Variables[words[-1].upper()] = self.GenerateVariableTree(var_tree)
             else:
                 self.Variables[words[-1].upper()] = {}
 
@@ -583,28 +549,25 @@ class TextViewer(EditorPanel):
 
     def RefreshLineFolding(self, line_number):
         if self.TextSyntax in ["ST", "ALL"]:
-            level = wx.stc.STC_FOLDLEVELBASE + \
-                self.Editor.GetLineIndentation(line_number)
+            level = wx.stc.STC_FOLDLEVELBASE + self.Editor.GetLineIndentation(line_number)
             line = self.Editor.GetLine(line_number).strip()
             if line == "":
                 if line_number > 0:
                     if LineStartswith(self.Editor.GetLine(line_number - 1).strip(), self.BlockEndKeywords):
-                        level = self.Editor.GetFoldLevel(self.Editor.GetFoldParent(
-                            line_number - 1)) & wx.stc.STC_FOLDLEVELNUMBERMASK
-                    else:
                         level = self.Editor.GetFoldLevel(
-                            line_number - 1) & wx.stc.STC_FOLDLEVELNUMBERMASK
+                            self.Editor.GetFoldParent(line_number - 1)) & wx.stc.STC_FOLDLEVELNUMBERMASK
+                    else:
+                        level = self.Editor.GetFoldLevel(line_number - 1) & wx.stc.STC_FOLDLEVELNUMBERMASK
                 if level != wx.stc.STC_FOLDLEVELBASE:
                     level |= wx.stc.STC_FOLDLEVELWHITEFLAG
             elif LineStartswith(line, self.BlockStartKeywords):
                 level |= wx.stc.STC_FOLDLEVELHEADERFLAG
             elif LineStartswith(line, self.BlockEndKeywords):
                 if LineStartswith(self.Editor.GetLine(line_number - 1).strip(), self.BlockEndKeywords):
-                    level = self.Editor.GetFoldLevel(self.Editor.GetFoldParent(
-                        line_number - 1)) & wx.stc.STC_FOLDLEVELNUMBERMASK
-                else:
                     level = self.Editor.GetFoldLevel(
-                        line_number - 1) & wx.stc.STC_FOLDLEVELNUMBERMASK
+                        self.Editor.GetFoldParent(line_number - 1)) & wx.stc.STC_FOLDLEVELNUMBERMASK
+                else:
+                    level = self.Editor.GetFoldLevel(line_number - 1) & wx.stc.STC_FOLDLEVELNUMBERMASK
             self.Editor.SetFoldLevel(line_number, level)
 
     def OnStyleNeeded(self, event):
@@ -613,8 +576,7 @@ class TextViewer(EditorPanel):
         if line_number == 0:
             start_pos = last_styled_pos = 0
         else:
-            start_pos = last_styled_pos = self.Editor.GetLineEndPosition(
-                line_number - 1) + 1
+            start_pos = last_styled_pos = self.Editor.GetLineEndPosition(line_number - 1) + 1
         self.RefreshLineFolding(line_number)
         end_pos = event.GetPosition()
         self.StartStyling(start_pos, 0xff)
@@ -633,42 +595,31 @@ class TextViewer(EditorPanel):
                 self.ContextStack = []
                 current_context = self.Variables
                 if state == COMMENT:
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_COMMENT)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_COMMENT)
                 elif state == NUMBER:
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_NUMBER)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_NUMBER)
                 elif state == WORD:
                     if word in self.Keywords or word in self.TypeNames:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_WORD)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_WORD)
                     elif self.IsValidVariable(word, current_context):
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_VARIABLE)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_VARIABLE)
                     elif self.IsCallParameter(word, current_call):
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_PARAMETER)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_PARAMETER)
                     elif word in self.Functions:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_FUNCTION)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_FUNCTION)
                     elif self.TextSyntax == "IL" and word in self.Jumps:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_JUMP)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_JUMP)
                     elif word in self.EnumeratedValues:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_NUMBER)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_NUMBER)
                     else:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_EMPTY)
-                        if word not in ["]", ")"] and (self.GetCurrentPos() < last_styled_pos or self.GetCurrentPos() > current_pos):
-                            self.StartStyling(
-                                last_styled_pos, wx.stc.STC_INDICS_MASK)
-                            self.SetStyling(
-                                current_pos - last_styled_pos, wx.stc.STC_INDIC0_MASK)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_EMPTY)
+                        if word not in ["]", ")"] and (
+                                self.GetCurrentPos() < last_styled_pos or self.GetCurrentPos() > current_pos):
+                            self.StartStyling(last_styled_pos, wx.stc.STC_INDICS_MASK)
+                            self.SetStyling(current_pos - last_styled_pos, wx.stc.STC_INDIC0_MASK)
                             self.StartStyling(current_pos, 0xff)
                 else:
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_EMPTY)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_EMPTY)
                 last_styled_pos = current_pos
                 if (state != DPRAGMA) and (state != COMMENT):
                     state = SPACE
@@ -676,8 +627,7 @@ class TextViewer(EditorPanel):
                 line_number += 1
                 self.RefreshLineFolding(line_number)
             elif line.endswith("(*") and state != COMMENT:
-                self.SetStyling(
-                    current_pos - last_styled_pos - 1, STC_PLC_EMPTY)
+                self.SetStyling(current_pos - last_styled_pos - 1, STC_PLC_EMPTY)
                 last_styled_pos = current_pos
                 if state == WORD:
                     current_context = self.Variables
@@ -694,8 +644,7 @@ class TextViewer(EditorPanel):
                 state = DPRAGMA
             elif state == COMMENT:
                 if line.endswith("*)"):
-                    self.SetStyling(
-                        current_pos - last_styled_pos + 2, STC_PLC_COMMENT)
+                    self.SetStyling(current_pos - last_styled_pos + 2, STC_PLC_COMMENT)
                     last_styled_pos = current_pos + 1
                     state = SPACE
                     if len(self.CallStack) > 0:
@@ -704,14 +653,12 @@ class TextViewer(EditorPanel):
                         current_call = None
             elif state == PRAGMA:
                 if line.endswith("}"):
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_EMPTY)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_EMPTY)
                     last_styled_pos = current_pos
                     state = SPACE
             elif state == DPRAGMA:
                 if line.endswith("}}"):
-                    self.SetStyling(
-                        current_pos - last_styled_pos + 1, STC_PLC_EMPTY)
+                    self.SetStyling(current_pos - last_styled_pos + 1, STC_PLC_EMPTY)
                     last_styled_pos = current_pos + 1
                     state = SPACE
             elif (line.endswith("'") or line.endswith('"')) and state not in [STRING, WSTRING]:
@@ -725,14 +672,12 @@ class TextViewer(EditorPanel):
                     state = WSTRING
             elif state == STRING:
                 if line.endswith("'") and not line.endswith("$'"):
-                    self.SetStyling(
-                        current_pos - last_styled_pos + 1, STC_PLC_STRING)
+                    self.SetStyling(current_pos - last_styled_pos + 1, STC_PLC_STRING)
                     last_styled_pos = current_pos + 1
                     state = SPACE
             elif state == WSTRING:
                 if line.endswith('"') and not line.endswith('$"'):
-                    self.SetStyling(
-                        current_pos - last_styled_pos + 1, STC_PLC_STRING)
+                    self.SetStyling(current_pos - last_styled_pos + 1, STC_PLC_STRING)
                     last_styled_pos = current_pos + 1
                     state = SPACE
             elif char in LETTERS:
@@ -740,8 +685,7 @@ class TextViewer(EditorPanel):
                     word = "#"
                     state = WORD
                 elif state == SPACE:
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_EMPTY)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_EMPTY)
                     word = char
                     last_styled_pos = current_pos
                     state = WORD
@@ -749,8 +693,7 @@ class TextViewer(EditorPanel):
                     word += char
             elif char in NUMBERS or char == '.' and state != WORD:
                 if state == SPACE:
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_EMPTY)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_EMPTY)
                     last_styled_pos = current_pos
                     state = NUMBER
                 elif state == WORD and char != '.':
@@ -761,37 +704,28 @@ class TextViewer(EditorPanel):
             else:
                 if state == WORD:
                     if word in self.Keywords or word in self.TypeNames:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_WORD)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_WORD)
                     elif self.IsValidVariable(word, current_context):
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_VARIABLE)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_VARIABLE)
                     elif self.IsCallParameter(word, current_call):
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_PARAMETER)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_PARAMETER)
                     elif word in self.Functions:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_FUNCTION)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_FUNCTION)
                     elif self.TextSyntax == "IL" and word in self.Jumps:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_JUMP)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_JUMP)
                     elif word in self.EnumeratedValues:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_NUMBER)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_NUMBER)
                     else:
-                        self.SetStyling(
-                            current_pos - last_styled_pos, STC_PLC_EMPTY)
-                        if word not in ["]", ")"] and (self.GetCurrentPos() < last_styled_pos or self.GetCurrentPos() > current_pos):
-                            self.StartStyling(
-                                last_styled_pos, wx.stc.STC_INDICS_MASK)
-                            self.SetStyling(
-                                current_pos - last_styled_pos, wx.stc.STC_INDIC0_MASK)
+                        self.SetStyling(current_pos - last_styled_pos, STC_PLC_EMPTY)
+                        if word not in ["]", ")"] and (
+                                self.GetCurrentPos() < last_styled_pos or self.GetCurrentPos() > current_pos):
+                            self.StartStyling(last_styled_pos, wx.stc.STC_INDICS_MASK)
+                            self.SetStyling(current_pos - last_styled_pos, wx.stc.STC_INDIC0_MASK)
                             self.StartStyling(current_pos, 0xff)
                     if char == '.':
                         if word != "]":
                             if current_context is not None:
-                                current_context = current_context.get(
-                                    word, None)
+                                current_context = current_context.get(word, None)
                             else:
                                 current_context = None
                     elif char == '(':
@@ -803,16 +737,14 @@ class TextViewer(EditorPanel):
                         current_context = self.Variables
                     else:
                         if char == '[' and current_context is not None:
-                            self.ContextStack.append(
-                                current_context.get(word, None))
+                            self.ContextStack.append(current_context.get(word, None))
                         current_context = self.Variables
 
                     word = ""
                     last_styled_pos = current_pos
                     state = SPACE
                 elif state == NUMBER:
-                    self.SetStyling(
-                        current_pos - last_styled_pos, STC_PLC_NUMBER)
+                    self.SetStyling(current_pos - last_styled_pos, STC_PLC_NUMBER)
                     last_styled_pos = current_pos
                     state = SPACE
                 if char == ']':
@@ -839,14 +771,11 @@ class TextViewer(EditorPanel):
             if word in self.Keywords or word in self.TypeNames:
                 self.SetStyling(current_pos - last_styled_pos, STC_PLC_WORD)
             elif self.IsValidVariable(word, current_context):
-                self.SetStyling(current_pos - last_styled_pos,
-                                STC_PLC_VARIABLE)
+                self.SetStyling(current_pos - last_styled_pos, STC_PLC_VARIABLE)
             elif self.IsCallParameter(word, current_call):
-                self.SetStyling(current_pos - last_styled_pos,
-                                STC_PLC_PARAMETER)
+                self.SetStyling(current_pos - last_styled_pos, STC_PLC_PARAMETER)
             elif self.TextSyntax == "IL" and word in self.Functions:
-                self.SetStyling(current_pos - last_styled_pos,
-                                STC_PLC_FUNCTION)
+                self.SetStyling(current_pos - last_styled_pos, STC_PLC_FUNCTION)
             elif word in self.Jumps:
                 self.SetStyling(current_pos - last_styled_pos, STC_PLC_JUMP)
             elif word in self.EnumeratedValues:
@@ -912,8 +841,7 @@ class TextViewer(EditorPanel):
                 if self.SearchParams["wrap"]:
                     idx = (old_idx + direction) % len(self.SearchResults)
                 else:
-                    idx = max(0, min(old_idx + direction,
-                              len(self.SearchResults) - 1))
+                    idx = max(0, min(old_idx + direction, len(self.SearchResults) - 1))
                 if idx != old_idx:
                     self.RemoveHighlight(*self.CurrentFindHighlight)
                     self.CurrentFindHighlight = self.SearchResults[idx]
@@ -933,16 +861,6 @@ class TextViewer(EditorPanel):
         self.Controler.SetEditedElementText(self.TagName, self.GetText())
         self.ResetSearchResults()
 
-    def cleanupForAutocomplete(self, word):
-        idxBegin = word.find('[')
-        if idxBegin < 0:
-            return word
-        mtch = re.match('([^\[]+)(\[[^\]]+\])+', word)
-        if mtch is not None:
-            word = mtch.group(1)
-        # print("CLEANUP returning word: %s" % word)
-        return word
-
     def OnKeyDown(self, event):
         key = event.GetKeyCode()
         if self.Controler is not None:
@@ -958,16 +876,13 @@ class TextViewer(EditorPanel):
             else:
                 start_pos = self.Editor.GetLineEndPosition(line - 1) + 1
             end_pos = self.GetCurrentPos()
-            lineText = self.Editor.GetTextRange(
-                start_pos, end_pos).replace("\t", " ")
+            lineText = self.Editor.GetTextRange(start_pos, end_pos).replace("\t", " ")
 
             # Code completion
             if key == wx.WXK_SPACE and event.ControlDown():
 
                 words = lineText.split(" ")
-                words = [word for i, word in enumerate(
-                    words) if word != '' or i == len(words) - 1]
-                #words = [self.cleanupForAutocomplete(w) for w in words]
+                words = [word for i, word in enumerate(words) if word != '' or i == len(words) - 1]
 
                 kw = []
 
@@ -980,42 +895,15 @@ class TextViewer(EditorPanel):
                         elif words[0].upper() in ["JMP", "JMPC", "JMPNC"]:
                             kw = self.Jumps
                         else:
-                            kw = self.Variables.keys()
+                            kw = list(self.Variables.keys())
                 else:
-                    kw = self.Keywords + self.Variables.keys() + self.Functions.keys()
+                    kw = self.Keywords + list(self.Variables.keys()) + list(self.Functions.keys())
                 if len(kw) > 0:
-                    target_word = words[-1]
-                    struct_els = target_word.split('.')
-                    #print('VARS %s' % str(self.Variables))
-                    if len(struct_els) < 2:
-                        target_word = self.cleanupForAutocomplete(target_word)
-                    else:
-                        # we have a dot-separated value -- i.e. some structured instance
-                        # we will drill down the tree to find relevant elements
-                        var_ctx = self.Variables
-                        i = 0
-                        while i < (len(struct_els) - 1) and var_ctx is not None:
-                            cur_level_word = self.cleanupForAutocomplete(
-                                struct_els[i])
-                            if len(cur_level_word) and cur_level_word.upper() in var_ctx:
-                                var_ctx = var_ctx[cur_level_word.upper()]
-                            i += 1
-                        kw = var_ctx.keys()
-                        if struct_els[-1].upper() == struct_els[-1]:
-                            target_word = self.cleanupForAutocomplete(
-                                struct_els[-1]).upper()
-                        else:
-                            target_word = self.cleanupForAutocomplete(
-                                struct_els[-1]).lower()
-                            kw = [keyword.lower() for keyword in kw]
-                    if len(target_word) > 0:
-                        kw = [keyword for keyword in kw if keyword.startswith(
-                            target_word)]
-                    kw.sort()
-                    if len(kw):
-                        self.Editor.AutoCompSetIgnoreCase(True)
-                        self.Editor.AutoCompShow(
-                            len(target_word), " ".join(kw))
+                    if len(words[-1]) > 0:
+                        kw = [keyword for keyword in kw if keyword.startswith(words[-1])]
+                    sorted(kw)
+                    self.Editor.AutoCompSetIgnoreCase(True)
+                    self.Editor.AutoCompShow(len(words[-1]), " ".join(kw))
                 key_handled = True
             elif key == wx.WXK_RETURN or key == wx.WXK_NUMPAD_ENTER:
                 if self.TextSyntax in ["ST", "ALL"]:
@@ -1027,12 +915,10 @@ class TextViewer(EditorPanel):
             elif key == wx.WXK_BACK:
                 if self.TextSyntax in ["ST", "ALL"]:
                     if not self.Editor.GetSelectedText():
-                        indent = self.Editor.GetColumn(
-                            self.Editor.GetCurrentPos())
+                        indent = self.Editor.GetColumn(self.Editor.GetCurrentPos())
                         if lineText.strip() == "" and len(lineText) > 0 and indent > 0:
                             self.Editor.DelLineLeft()
-                            self.Editor.AddText(
-                                " " * ((max(0, indent - 1) // 2) * 2))
+                            self.Editor.AddText(" " * ((max(0, indent - 1) // 2) * 2))
                             key_handled = True
             if not key_handled:
                 event.Skip()
@@ -1059,8 +945,8 @@ class TextViewer(EditorPanel):
         else:
             highlight_type = HIGHLIGHT_TYPES.get(highlight_type, None)
             if highlight_type is not None:
-                self.Highlights = [(infos, start, end, highlight) for (
-                    infos, start, end, highlight) in self.Highlights if highlight != highlight_type]
+                self.Highlights = [(infos, start, end, highlight) for (infos, start, end, highlight) in self.Highlights
+                                   if highlight != highlight_type]
         self.RefreshView()
 
     def AddHighlight(self, infos, start, end, highlight_type):
@@ -1069,38 +955,31 @@ class TextViewer(EditorPanel):
         highlight_type = HIGHLIGHT_TYPES.get(highlight_type, None)
         if infos[0] == "body" and highlight_type is not None:
             self.Highlights.append((infos[1], start, end, highlight_type))
-            self.Editor.GotoPos(
-                self.Editor.PositionFromLine(start[0]) + start[1])
-            self.RefreshHighlightsTimer.Start(int(REFRESH_HIGHLIGHT_PERIOD * 1000),
-                                              oneShot=True)
+            self.Editor.GotoPos(self.Editor.PositionFromLine(start[0]) + start[1])
+            self.RefreshHighlightsTimer.Start(int(REFRESH_HIGHLIGHT_PERIOD * 1000), oneShot=True)
 
     def RemoveHighlight(self, infos, start, end, highlight_type):
         EditorPanel.RemoveHighlight(self, infos, start, end, highlight_type)
 
         highlight_type = HIGHLIGHT_TYPES.get(highlight_type, None)
         if infos[0] == "body" and highlight_type is not None and \
-           (infos[1], start, end, highlight_type) in self.Highlights:
+                (infos[1], start, end, highlight_type) in self.Highlights:
             self.Highlights.remove((infos[1], start, end, highlight_type))
-            self.RefreshHighlightsTimer.Start(int(REFRESH_HIGHLIGHT_PERIOD * 1000),
-                                              oneShot=True)
+            self.RefreshHighlightsTimer.Start(int(REFRESH_HIGHLIGHT_PERIOD * 1000), oneShot=True)
 
     def ShowHighlights(self, start_pos, end_pos):
         for indent, start, end, highlight_type in self.Highlights:
             if start[0] == 0:
                 highlight_start_pos = start[1] - indent
             else:
-                highlight_start_pos = self.Editor.GetLineEndPosition(
-                    start[0] - 1) + start[1] - indent + 1
+                highlight_start_pos = self.Editor.GetLineEndPosition(start[0] - 1) + start[1] - indent + 1
             if end[0] == 0:
                 highlight_end_pos = end[1] - indent + 1
             else:
-                highlight_end_pos = self.Editor.GetLineEndPosition(
-                    end[0] - 1) + end[1] - indent + 2
+                highlight_end_pos = self.Editor.GetLineEndPosition(end[0] - 1) + end[1] - indent + 2
             if highlight_start_pos < end_pos and highlight_end_pos > start_pos:
                 self.StartStyling(highlight_start_pos, 0xff)
-                self.SetStyling(highlight_end_pos -
-                                highlight_start_pos, highlight_type)
+                self.SetStyling(highlight_end_pos - highlight_start_pos, highlight_type)
                 self.StartStyling(highlight_start_pos, 0x00)
-                until_end = max(
-                    0, len(self.Editor.GetText()) - highlight_end_pos)
+                until_end = max(0, len(self.Editor.GetText()) - highlight_end_pos)
                 self.SetStyling(until_end, wx.stc.STC_STYLE_DEFAULT)

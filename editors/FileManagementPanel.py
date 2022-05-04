@@ -27,10 +27,11 @@ import os
 import shutil
 
 import wx
+import wx.lib.buttons
 
+from controls import FolderTree
 from editors.EditorPanel import EditorPanel
 from util.BitmapLibrary import GetBitmap
-from controls import FolderTree
 
 
 class FileManagementPanel(EditorPanel):
@@ -43,38 +44,31 @@ class FileManagementPanel(EditorPanel):
         left_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(left_sizer, 1, border=5, flag=wx.GROW | wx.ALL)
 
-        managed_dir_label = wx.StaticText(
-            self.Editor, label=_(self.TagName) + ":")
-        left_sizer.Add(managed_dir_label, border=5,
-                             flag=wx.GROW | wx.BOTTOM)
+        managed_dir_label = wx.StaticText(self.Editor, label=_(self.TagName) + ":")
+        left_sizer.Add(managed_dir_label, border=5, flag=wx.GROW | wx.BOTTOM)
 
         FILTER = _("All files (*.*)|*.*|CSV files (*.csv)|*.csv")
         self.ManagedDir = FolderTree(self.Editor, self.Folder, FILTER)
         left_sizer.Add(self.ManagedDir, 1, flag=wx.GROW)
 
         managed_treectrl = self.ManagedDir.GetTreeCtrl()
-        self.Bind(wx.EVT_TREE_SEL_CHANGED,
-                  self.OnTreeItemChanged, managed_treectrl)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeItemChanged, managed_treectrl)
         if self.EnableDragNDrop:
-            self.Bind(wx.EVT_TREE_BEGIN_DRAG,
-                      self.OnTreeBeginDrag, managed_treectrl)
+            self.Bind(wx.EVT_TREE_BEGIN_DRAG, self.OnTreeBeginDrag, managed_treectrl)
 
         button_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(button_sizer, border=5,
-                            flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+                       flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
 
         for idx, (name, bitmap, help) in enumerate([
-                ("DeleteButton", "remove_element", _(
-                    "Remove file from left folder")),
-                ("LeftCopyButton", "LeftCopy", _(
-                    "Copy file from right folder to left")),
-                ("RightCopyButton", "RightCopy", _(
-                    "Copy file from left folder to right")),
+                ("DeleteButton", "remove_element", _("Remove file from left folder")),
+                ("LeftCopyButton", "LeftCopy", _("Copy file from right folder to left")),
+                ("RightCopyButton", "RightCopy", _("Copy file from left folder to right")),
                 ("EditButton", "edit", _("Edit file"))]):
-            button = wx.BitmapButton(parent=self.Editor,
-                                     bitmap=GetBitmap(bitmap),
-                                     size=wx.Size(28, 28),
-                                     style=wx.NO_BORDER)
+            button = wx.lib.buttons.GenBitmapButton(
+                self.Editor,
+                bitmap=GetBitmap(bitmap),
+                size=wx.Size(28, 28), style=wx.NO_BORDER)
             button.SetToolTip(help)
             setattr(self, name, button)
             if idx > 0:
@@ -88,21 +82,16 @@ class FileManagementPanel(EditorPanel):
         main_sizer.Add(right_sizer, 1, border=5, flag=wx.GROW | wx.ALL)
 
         if wx.Platform == '__WXMSW__':
-            system_dir_label = wx.StaticText(
-                self.Editor, label=_("My Computer:"))
+            system_dir_label = wx.StaticText(self.Editor, label=_("My Computer:"))
         else:
-            system_dir_label = wx.StaticText(
-                self.Editor, label=_("Home Directory:"))
-        right_sizer.Add(system_dir_label, border=5,
-                              flag=wx.GROW | wx.BOTTOM)
+            system_dir_label = wx.StaticText(self.Editor, label=_("Home Directory:"))
+        right_sizer.Add(system_dir_label, border=5, flag=wx.GROW | wx.BOTTOM)
 
-        self.SystemDir = FolderTree(
-            self.Editor, self.HomeDirectory, FILTER, False)
+        self.SystemDir = FolderTree(self.Editor, self.HomeDirectory, FILTER, False)
         right_sizer.Add(self.SystemDir, 1, flag=wx.GROW)
 
         system_treectrl = self.SystemDir.GetTreeCtrl()
-        self.Bind(wx.EVT_TREE_SEL_CHANGED,
-                  self.OnTreeItemChanged, system_treectrl)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeItemChanged, system_treectrl)
 
         self.Editor.SetSizer(main_sizer)
 
@@ -115,7 +104,7 @@ class FileManagementPanel(EditorPanel):
         else:
             self.HomeDirectory = os.path.expanduser("~")
 
-        super().__init__(parent, name, None, None)
+        EditorPanel.__init__(self, parent, name, None, None)
 
         self.Controler = controler
 
@@ -205,16 +194,14 @@ class FileManagementPanel(EditorPanel):
         return None
 
     def OnLeftCopyButton(self, event):
-        filepath = self.CopyFile(
-            self.SystemDir.GetPath(), self.ManagedDir.GetPath())
+        filepath = self.CopyFile(self.SystemDir.GetPath(), self.ManagedDir.GetPath())
         if filepath is not None:
             self.ManagedDir.RefreshTree()
             self.ManagedDir.SetPath(filepath)
         event.Skip()
 
     def OnRightCopyButton(self, event):
-        filepath = self.CopyFile(
-            self.ManagedDir.GetPath(), self.SystemDir.GetPath())
+        filepath = self.CopyFile(self.ManagedDir.GetPath(), self.SystemDir.GetPath())
         if filepath is not None:
             self.SystemDir.RefreshTree()
             self.SystemDir.SetPath(filepath)
@@ -223,10 +210,8 @@ class FileManagementPanel(EditorPanel):
     def OnTreeBeginDrag(self, event):
         filepath = self.ManagedDir.GetPath()
         if os.path.isfile(filepath):
-            relative_filepath = filepath.replace(
-                os.path.join(self.Folder, ""), "")
-            data = wx.TextDataObject(
-                str(("'%s'" % relative_filepath, "Constant")))
+            relative_filepath = filepath.replace(os.path.join(self.Folder, ""), "")
+            data = wx.TextDataObject(str(("'%s'" % relative_filepath, "Constant")))
             dragSource = wx.DropSource(self)
             dragSource.SetData(data)
             dragSource.DoDragDrop()

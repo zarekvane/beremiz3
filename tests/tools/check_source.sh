@@ -347,7 +347,7 @@ pylint_checks()
     enable=$enable,W0106          # (expression-not-assigned) Expression "X" is assigned to nothing
     enable=$enable,E1136          # (unsubscriptable-object) Value 'X' is unsubscriptable
     enable=$enable,E0602          # (undefined-variable) Undefined variable 'X'
-    enable=$enable,W1618          # (no-absolute-import) import missing ``
+    enable=$enable,W1618          # (no-absolute-import) import missing `from __future__ import absolute_import`
     enable=$enable,W0403          # (relative-import) Relative import 'Y', should be 'X.Y '
     enable=$enable,W0612          # (unused-variable) Unused variable 'X'
     enable=$enable,C0330          # (bad-continuation) Wrong hanging indentation before block

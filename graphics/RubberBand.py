@@ -23,10 +23,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+
+
 import wx
 
 from graphics.GraphicCommons import GetScaledEventPosition
-import wxpatch
 
 
 # -------------------------------------------------------------------------------
@@ -34,7 +35,7 @@ import wxpatch
 # -------------------------------------------------------------------------------
 
 
-class RubberBand:
+class RubberBand(object):
     """
     Class that implements a rubberband for graphic Viewers
     """
@@ -90,7 +91,7 @@ class RubberBand:
         self.StartPoint = GetScaledEventPosition(event, dc, scaling)
 
         # Initialize rubberband bounding box
-        self.CurrentBBox = wxpatch.Rect(self.StartPoint.x, self.StartPoint.y, 0, 0)
+        self.CurrentBBox = wx.Rect(self.StartPoint.x, self.StartPoint.y, 0, 0)
 
         # Change viewer mouse cursor to reflect a rubberband bounding box is
         # edited
@@ -111,7 +112,7 @@ class RubberBand:
         pos = GetScaledEventPosition(event, dc, scaling)
 
         # Save the last bounding box drawn for erasing it later
-        self.LastBBox = wxpatch.Rect(0, 0, 0, 0)
+        self.LastBBox = wx.Rect(0, 0, 0, 0)
         self.LastBBox.Union(self.CurrentBBox)
 
         # Calculate new position and size of the box
@@ -163,8 +164,9 @@ class RubberBand:
         # Draw the bounding boxes using viewer scale factor
         for bbox in bboxes:
             if bbox is not None:
-                wxpatch.DrawRectangle(dc, int(bbox.x * scalex), int(bbox.y * scaley),
-                    int(bbox.width * scalex), int(bbox.height * scaley))
+                dc.DrawRectangle(
+                    bbox.x * scalex, bbox.y * scaley,
+                    bbox.width * scalex, bbox.height * scaley)
 
         dc.SetLogicalFunction(wx.COPY)
 

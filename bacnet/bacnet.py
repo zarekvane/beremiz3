@@ -24,15 +24,11 @@
 # used in safety-critical situations without a full and competent review.
 
 import os
-from collections import Counter
-from datetime import datetime
 import pickle
+from datetime import datetime
 
-import wx
-
-from bacnet.BacnetSlaveEditor import *
-from bacnet.BacnetSlaveEditor import ObjectProperties
 from PLCControler import LOCATION_CONFNODE, LOCATION_VAR_MEMORY
+from bacnet.BacnetSlaveEditor import *
 
 base_folder = os.path.split(
     os.path.dirname(os.path.realpath(__file__)))[0]
@@ -63,7 +59,7 @@ BACNET_DEVICE_MODEL_NAME = "Beremiz PLC"
 # class _BacnetSlavePlug:
 
 
-class RootClass:
+class RootClass(object):
     XSD = """<?xml version="1.0" encoding="ISO-8859-1" ?>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
       <xsd:element name="BACnetServerNode">
@@ -140,12 +136,12 @@ class RootClass:
     #
     #  Logic:
     #    - The xx_VarEditor classes inherit from wx.grid.Grid
-    #    - The xx_ObjTable  classes inherit from wx.grid.PyGridTableBase
+    #    - The xx_ObjTable  classes inherit from wx.grid.GridTableBase
     #  To be more precise, the inheritance tree is actually:
     #    xx_VarEditor -> ObjectGrid -> CustomGrid   -> wx.grid.Grid
-    #    xx_ObjTable  -> ObjectTable -> CustomTable -> wx.grid.PyGridTableBase)
+    #    xx_ObjTable  -> ObjectTable -> CustomTable -> wx.grid.GridTableBase)
     #
-    #  Note that wx.grid.Grid is prepared to work with wx.grid.PyGridTableBase as the container of
+    #  Note that wx.grid.Grid is prepared to work with wx.grid.GridTableBase as the container of
     #  data that is displayed and edited in the Grid.
 
     ConfNodeMethods = [
@@ -396,10 +392,10 @@ class RootClass:
         # contains more stuff we do not need to store. Actually it is a bad idea to store
         # this extra stuff (as we would make the files we generate dependent on the actual
         # version of the wx library we are using!!! Remember that ObjTables evetually
-        # derives/inherits from wx.grid.PyGridTableBase). Another reason not to store the whole
+        # derives/inherits from wx.grid.GridTableBase). Another reason not to store the whole
         # object is because it is not pickable (i.e. pickle.dump() cannot handle it)!!
         try:
-            fd = open(filepath,   "w")
+            fd = open(filepath, "w", encoding='utf-8')
             pickle.dump(self.ObjTablesData, fd)
             fd.close()
             # On successfull save, reset flags to indicate no more changes that
@@ -534,7 +530,7 @@ class RootClass:
         template_file_name = os.path.join(
             template_file_dir, "template_EDE.csv")
         generate_file_content = open(template_file_name).read() % projdata_dict
-        generate_file_handle = open(generate_file_name, 'w')
+        generate_file_handle = open(generate_file_name, 'w', encoding='utf-8')
         generate_file_handle  .write(generate_file_content)
         generate_file_handle  .write("\n".join(Objects_List))
         generate_file_handle  .close()
@@ -546,7 +542,7 @@ class RootClass:
             template_file_name = os.path.join(
                 template_file_dir, "template" + extension)
             generate_file_content = open(template_file_name).read()
-            generate_file_handle = open(generate_file_name, 'w')
+            generate_file_handle = open(generate_file_name, 'w', encoding='utf-8')
             generate_file_handle  .write(generate_file_content)
             generate_file_handle  .close()
 
@@ -695,7 +691,7 @@ class RootClass:
             template_file_name = os.path.join(
                 template_file_dir, "%s.%s" % (file_name, extension))
             generate_file_content = open(template_file_name).read() % loc_dict
-            generate_file_handle = open(generate_file_name, 'w')
+            generate_file_handle = open(generate_file_name, 'w', encoding='utf-8')
             generate_file_handle.write(generate_file_content)
             generate_file_handle.close()
 
@@ -724,4 +720,4 @@ class RootClass:
         CFLAGS = ' -I"' + BacnetIncludePath + '"'
         CFLAGS += ' -I"' + BacnetIncludePortPath + '"'
 
-        return [(Generated_BACnet_c_mainfile_name, CFLAGS)], LDFLAGS, True
+        return [(Generated_BACnet_c_mainfile_name, CFLAGS)], LDFLAGS, True, []

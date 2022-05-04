@@ -23,18 +23,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
+# 
 
 
 import os
 import platform as platform_module
-from zope.interface import implements
+
+from formless import annotate
+from formless import configurable
+from formless import webform
 from nevow import appserver, inevow, tags, loaders, athena, url, rend
 from nevow.page import renderer
 from nevow.static import File
-from formless import annotate
-from formless import webform
-from formless import configurable
 from twisted.internet import reactor
+from zope.interface import implements
 
 import util.paths as paths
 from runtime.loglevels import LogLevels, LogLevelsDict
@@ -86,7 +88,7 @@ class MainPage(athena.LiveElement):
             tags.a(href='settings')['Settings']])
 
     def __init__(self, *a, **kw):
-        super().__init__(*a, **kw)
+        athena.LiveElement.__init__(self, *a, **kw)
         self.pcl_state = False
         self.HMI = None
         self.resetPLCStartedHMI()
@@ -136,7 +138,7 @@ class MainPage(athena.LiveElement):
 class ConfigurableBindings(configurable.Configurable):
 
     def __init__(self):
-        super().__init__(None)
+        configurable.Configurable.__init__(self, None)
         self.bindingsNames = []
         self.infostringcount = 0
 
@@ -291,7 +293,7 @@ class WebInterface(athena.LivePage):
         return self.MainPage.getHMI()
 
     def LoadHMI(self, hmi, jsmodules):
-        for name, path in jsmodules.items():
+        for name, path in jsmodules.iteritems():
             self.jsModules.mapping[name] = os.path.join(WorkingDir, path)
         self.MainPage.setPLCStartedHMI(hmi)
 
@@ -342,7 +344,7 @@ def RegisterWebsite(iface, port):
     return website
 
 
-class statuslistener:
+class statuslistener(object):
 
     def __init__(self, site):
         self.oldstate = None

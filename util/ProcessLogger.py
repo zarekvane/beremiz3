@@ -23,12 +23,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-import os
-import sys
-import subprocess
 import ctypes
-from threading import Timer, Lock, Thread, Semaphore
+import os
 import signal
+import subprocess
+import sys
+from threading import Timer, Lock, Thread, Semaphore
+
+import wx
 
 
 class outputThread(Thread):
@@ -37,7 +39,7 @@ class outputThread(Thread):
     """
 
     def __init__(self, Proc, fd, callback=None, endcallback=None):
-        super().__init__()
+        Thread.__init__(self)
         self.killed = False
         self.finished = False
         self.retval = None
@@ -58,7 +60,7 @@ class outputThread(Thread):
             outchunk = self.fd.readline()
             if self.callback:
                 self.callback(outchunk)
-        while outchunk != '' and not self.killed:
+        while outchunk != b'' and not self.killed:
             outchunk = self.fd.readline()
             if self.callback:
                 self.callback(outchunk)
@@ -71,7 +73,7 @@ class outputThread(Thread):
             self.endcallback(self.Proc.pid, err)
 
 
-class ProcessLogger:
+class ProcessLogger(object):
     def __init__(self, logger, Command, finish_callback=None,
                  no_stdout=False, no_stderr=False, no_gui=True,
                  timeout=None, outlimit=None, errlimit=None,
@@ -97,8 +99,7 @@ class ProcessLogger:
 
         if encoding is None:
             encoding = fsencoding
-        self.Command = [self.Command[0].encode(fsencoding)]+map(
-            lambda x: x.encode(encoding), self.Command[1:])
+        self.Command = [self.Command[0]] + list(map(lambda x: x, self.Command[1:]))
 
         self.finish_callback = finish_callback
         self.no_stdout = no_stdout
@@ -118,8 +119,8 @@ class ProcessLogger:
         self.endlock = Lock()
 
         popenargs = {
-            "cwd":    os.getcwd() if cwd is None else cwd,
-            "stdin":  subprocess.PIPE,
+            "cwd": os.getcwd() if cwd is None else cwd,
+            "stdin": subprocess.PIPE,
             "stdout": subprocess.PIPE,
             "stderr": subprocess.PIPE
         }
@@ -160,7 +161,7 @@ class ProcessLogger:
         self.outlen += 1
         if not self.no_stdout:
             self.logger.write(v)
-        if (self.keyword and v.find(self.keyword) != -1) or (self.outlimit and self.outlen > self.outlimit):
+        if (self.keyword and v.find(self.keyword.encode()) != -1) or (self.outlimit and self.outlen > self.outlimit):
             self.endlog()
 
     def errors(self, v):
@@ -175,8 +176,7 @@ class ProcessLogger:
 
     def log_the_end(self, ecode, pid):
         self.logger.write(self.Command_str + "\n")
-        self.logger.write_warning(
-            _("exited with status {a1} (pid {a2})\n").format(a1=str(ecode), a2=str(pid)))
+        self.logger.write_warning(_("exited with status {a1} (pid {a2})\n").format(a1=str(ecode), a2=str(pid)))
 
     def finish(self, pid, ecode):
         # avoid running function before start is finished
@@ -201,8 +201,7 @@ class ProcessLogger:
         self.errt.killed = True
         if os.name in ("nt", "ce"):
             PROCESS_TERMINATE = 1
-            handle = ctypes.windll.kernel32.OpenProcess(
-                PROCESS_TERMINATE, False, self.Proc.pid)
+            handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False, self.Proc.pid)
             ctypes.windll.kernel32.TerminateProcess(handle, -1)
             ctypes.windll.kernel32.CloseHandle(handle)
         else:
@@ -224,5 +223,12 @@ class ProcessLogger:
             self.finishsem.release()
 
     def spin(self):
-        self.finishsem.acquire()
-        return [self.exitcode, "".join(self.outdata), "".join(self.errdata)]
+        while not self.finishsem.acquire(blocking=False):
+            eventLoop = wx.GUIEventLoop()
+            #eventLoop.Dispatch()
+        try:
+            return [self.exitcode, "".join([x.decode('gbk', errors='ignore') for x in self.outdata]),
+                    "".join([x.decode('gbk', errors='ignore') for x in self.errdata])]
+        except:
+            return [self.exitcode, "".join([x.decode() for x in self.outdata]),
+                    "".join([x.decode(errors='ignore') for x in self.errdata])]

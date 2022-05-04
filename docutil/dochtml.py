@@ -27,8 +27,6 @@ import subprocess
 import wx
 import wx.html
 
-import wxpatch
-
 HtmlFrameOpened = []
 
 
@@ -42,14 +40,13 @@ def OpenHtmlFrame(self, title, file, size):
         window.Show()
 
 
-[ID_HTMLFRAME, ID_HTMLFRAMEHTMLCONTENT] = [wx.NewId()
-                                           for _init_ctrls in range(2)]
+[ID_HTMLFRAME, ID_HTMLFRAMEHTMLCONTENT] = [wx.NewId() for _init_ctrls in range(2)]
 EVT_HTML_URL_CLICK = wx.NewId()
 
 
 class HtmlWindowUrlClick(wx.PyEvent):
     def __init__(self, linkinfo):
-        super().__init__()
+        wx.PyEvent.__init__(self)
         self.SetEventType(EVT_HTML_URL_CLICK)
         self.linkinfo = (linkinfo.GetHref(), linkinfo.GetTarget())
 
@@ -59,7 +56,6 @@ class UrlClickHtmlWindow(wx.html.HtmlWindow):
 
     Use this to avoid having to override HTMLWindow
     """
-
     def OnLinkClicked(self, linkinfo):
         wx.PostEvent(self, HtmlWindowUrlClick(linkinfo))
 
@@ -67,8 +63,7 @@ class UrlClickHtmlWindow(wx.html.HtmlWindow):
         if event == HtmlWindowUrlClick:
             self.Connect(-1, -1, EVT_HTML_URL_CLICK, handler)
         else:
-            wx.html.HtmlWindow.Bind(
-                self, event, handler, source=source, id=id, id2=id2)
+            wx.html.HtmlWindow.Bind(self, event, handler, source=source, id=id, id2=id2)
 
 
 class HtmlFrame(wx.Frame):
@@ -77,15 +72,15 @@ class HtmlFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseFrame)
 
         self.HtmlContent = UrlClickHtmlWindow(id=ID_HTMLFRAMEHTMLCONTENT,
-                                              name='HtmlContent', parent=self, pos=wxpatch.Point(0, 0),
+                                              name='HtmlContent', parent=self, pos=wx.Point(0, 0),
                                               size=wx.Size(-1, -1), style=wx.html.HW_SCROLLBAR_AUTO | wx.html.HW_NO_SELECTION)
         self.HtmlContent.Bind(HtmlWindowUrlClick, self.OnLinkClick)
 
     def __init__(self, parent, opened):
-        super().__init__(id=ID_HTMLFRAME, name='HtmlFrame',
-                         parent=parent, pos=wxpatch.Point(320, 231),
-                         size=wx.Size(853, 616),
-                         style=wx.DEFAULT_FRAME_STYLE, title='')
+        wx.Frame.__init__(self, id=ID_HTMLFRAME, name='HtmlFrame',
+                          parent=parent, pos=wx.Point(320, 231),
+                          size=wx.Size(853, 616),
+                          style=wx.DEFAULT_FRAME_STYLE, title='')
         self._init_ctrls(parent)
         self.HtmlFrameOpened = opened
 
@@ -106,7 +101,6 @@ class HtmlFrame(wx.Frame):
                 import webbrowser
                 webbrowser.open(url)
             elif subprocess.call("firefox %s" % url, shell=True) != 0:
-                wx.MessageBox(
-                    """Firefox browser not found.\nPlease point your browser at :\n%s""" % url)
+                wx.MessageBox("""Firefox browser not found.\nPlease point your browser at :\n%s""" % url)
         except ImportError:
             wx.MessageBox('Please point your browser at: %s' % url)

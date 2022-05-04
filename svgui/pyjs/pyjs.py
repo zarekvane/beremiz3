@@ -14,15 +14,12 @@
 # limitations under the License.
 #
 # pylint: disable=no-absolute-import,bad-python3-import
-
-
-import sys
-import compiler
-from compiler import ast
-import os
+import ast
 import copy
+import os
+import sys
+
 import io
-from builtins import str as text
 
 # the standard location for builtins (e.g. pyjslib) can be
 # over-ridden by changing this.  it defaults to sys.prefix
@@ -133,11 +130,11 @@ def escapejs(value):
 
 def uuprefix(name, leave_alone=0):
     name = name.split(".")
-    name = name[:leave_alone] + map(lambda x: "__%s" % x, name[leave_alone:])
+    name = name[:leave_alone] + list(map(lambda x: "__%s" % x, name[leave_alone:]))
     return '.'.join(name)
 
 
-class Klass:
+class Klass(object):
 
     klasses = {}
 
@@ -156,7 +153,7 @@ class Klass:
 
 class TranslationError(Exception):
     def __init__(self, message, node):
-        super().__init__()
+        Exception.__init__(self)
         self.message = "line %s:\n%s\n%s" % (node.lineno, message, node)
 
     def __str__(self):
@@ -193,7 +190,7 @@ def gen_mod_import(parentName, importName, dynamic=1):
         mod_var_name_decl(importName)
 
 
-class Translator:
+class Translator(object):
 
     def __init__(self, mn, module_name, raw_module_name, src, debug, mod, output,
                  dynamic=0, optimize=False,
@@ -1540,7 +1537,7 @@ def translate(file_name, module_name, debug=False):
     return output.getvalue()
 
 
-class PlatformParser:
+class PlatformParser(object):
     def __init__(self, platform_dir="", verbose=True):
         self.platform_dir = platform_dir
         self.parse_cache = {}
@@ -1635,7 +1632,7 @@ def dotreplace(fname):
     return path.replace(".", "/") + ext
 
 
-class AppTranslator:
+class AppTranslator(object):
 
     def __init__(self, library_dirs=None, parser=None, dynamic=False,
                  optimize=False, verbose=True):

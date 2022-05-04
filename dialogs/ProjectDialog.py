@@ -32,8 +32,8 @@ from controls.ProjectPropertiesPanel import ProjectPropertiesPanel
 class ProjectDialog(wx.Dialog):
 
     def __init__(self, parent, enable_required=True):
-        super().__init__(parent, title=_('Project properties'),
-                         style=wx.DEFAULT_DIALOG_STYLE)
+        wx.Dialog.__init__(self, parent, title=_('Project properties'),
+                           style=wx.DEFAULT_DIALOG_STYLE)
 
         main_sizer = wx.FlexGridSizer(cols=1, hgap=0, rows=2, vgap=10)
         main_sizer.AddGrowableCol(0)
@@ -43,10 +43,9 @@ class ProjectDialog(wx.Dialog):
             self, enable_required=enable_required, scrolling=False)
         main_sizer.Add(self.ProjectProperties, flag=wx.GROW)
 
-        self.ButtonSizer = self.CreateButtonSizer(
-            wx.OK | wx.CANCEL | wx.CENTRE)
-        self.Bind(wx.EVT_BUTTON, self.OnOK,
-                  self.ButtonSizer.GetAffirmativeButton())
+        self.ButtonSizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.CENTRE)
+        # self.Bind(wx.EVT_BUTTON, self.OnOK,
+        #           self.ButtonSizer.GetAffirmativeButton())
         main_sizer.Add(self.ButtonSizer, border=20,
                             flag=wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT)
 

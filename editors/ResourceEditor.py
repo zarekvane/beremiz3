@@ -25,17 +25,15 @@
 
 import wx
 import wx.grid
-from controls.CustomGrid import CustomGrid
-from controls.CustomTable import CustomTable
-from controls.DurationCellEditor import DurationCellEditor
+import wx.lib.buttons
 
-from graphics.GraphicCommons import REFRESH_HIGHLIGHT_PERIOD, ERROR_HIGHLIGHT
+from controls import CustomGrid, CustomTable, DurationCellEditor
 from dialogs.DurationEditorDialog import IEC_TIME_MODEL
 from editors.EditorPanel import EditorPanel
+from graphics.GraphicCommons import REFRESH_HIGHLIGHT_PERIOD, ERROR_HIGHLIGHT
+from plcopen.structures import TestIdentifier, IEC_KEYWORDS
 from util.BitmapLibrary import GetBitmap
 from util.TranslationCatalogs import NoTranslate
-from plcopen.structures import TestIdentifier, IEC_KEYWORDS
-
 
 # -------------------------------------------------------------------------------
 #                          Configuration Editor class
@@ -44,7 +42,7 @@ from plcopen.structures import TestIdentifier, IEC_KEYWORDS
 
 [
     ID_CONFIGURATIONEDITOR,
-] = [wx.NewId() for _init_ctrls in range(1)]
+] = [wx.NewIdRef() for _init_ctrls in range(1)]
 
 
 class ConfigurationEditor(EditorPanel):
@@ -98,10 +96,9 @@ class ResourceTable(CustomTable):
     """
     A custom wx.grid.Grid Table using user supplied data
     """
-
     def __init__(self, parent, data, colnames):
         # The base class must be initialized *first*
-        super().__init__(parent, data, colnames)
+        CustomTable.__init__(self, parent, data, colnames)
         self.ColAlignements = []
         self.ColSizes = []
         self.TASKTRIGGERINGOPTIONS_DICT = dict([(_(option), option)
@@ -134,7 +131,7 @@ class ResourceTable(CustomTable):
                 value = self.TASKTRIGGERINGOPTIONS_DICT[value]
             self.data[row][colname] = value
 
-    def _updateColAttrs(self, grid: wx.grid.Grid):
+    def _updateColAttrs(self, grid):
         """
         wx.grid.Grid -> update the column attributes to add the
         appropriate renderer given the column name.
@@ -176,18 +173,17 @@ class ResourceTable(CustomTable):
                     if single != "" and not CheckSingle(single, self.Parent.VariableList):
                         error = True
                 elif colname == "Triggering":
-                    editor = wx.grid.GridCellChoiceEditor([])
-                    editor.SetParameters(
-                        ",".join(map(_, GetTaskTriggeringOptions())))
+                    editor = wx.grid.GridCellChoiceEditor(GetTaskTriggeringOptions())
+                    editor.SetParameters(",".join(map(_, GetTaskTriggeringOptions())))
                 elif colname == "Type":
-                    editor = wx.grid.GridCellChoiceEditor([])
-                    editor.SetParameters(self.Parent.TypeList)
+                    editor = wx.grid.GridCellChoiceEditor(self.Parent.TypeList.split(','))
+                    # editor.SetParameters(self.Parent.TypeList)
                 elif colname == "Priority":
                     editor = wx.grid.GridCellNumberEditor()
                     editor.SetParameters("0,65535")
                 elif colname == "Task":
-                    editor = wx.grid.GridCellChoiceEditor([])
-                    editor.SetParameters(self.Parent.TaskList)
+                    editor = wx.grid.GridCellChoiceEditor(self.Parent.TaskList.split(','))
+                    # editor.SetParameters(self.Parent.TaskList)
 
                 grid.SetCellEditor(row, col, editor)
                 grid.SetCellRenderer(row, col, renderer)
@@ -195,8 +191,7 @@ class ResourceTable(CustomTable):
                 if error:
                     highlight_colours = ERROR_HIGHLIGHT
                 else:
-                    highlight_colours = row_highlights.get(
-                        colname.lower(), [(wx.WHITE, wx.BLACK)])[-1]
+                    highlight_colours = row_highlights.get(colname.lower(), [(wx.WHITE, wx.BLACK)])[-1]
                 grid.SetCellBackgroundColour(row, col, highlight_colours[0])
                 grid.SetCellTextColour(row, col, highlight_colours[1])
             self.ResizeRow(grid, row)
@@ -228,8 +223,7 @@ class ResourceEditor(EditorPanel):
     VARIABLE_PANEL_TYPE = "resource"
 
     def _init_Editor(self, parent):
-        self.Editor = wx.Panel(
-            parent, style=wx.SUNKEN_BORDER | wx.TAB_TRAVERSAL)
+        self.Editor = wx.Panel(parent, style=wx.SUNKEN_BORDER | wx.TAB_TRAVERSAL)
 
         main_sizer = wx.FlexGridSizer(cols=1, hgap=0, rows=2, vgap=5)
         main_sizer.AddGrowableCol(0)
@@ -255,17 +249,16 @@ class ResourceEditor(EditorPanel):
                 ("DeleteTaskButton", "remove_element", _("Remove task")),
                 ("UpTaskButton", "up", _("Move task up")),
                 ("DownTaskButton", "down", _("Move task down"))]:
-            button = wx.BitmapButton(parent=self.Editor,
-                                     bitmap=GetBitmap(bitmap),
-                                     size=wx.Size(28, 28),
-                                     style=wx.NO_BORDER)
+            button = wx.lib.buttons.GenBitmapButton(self.Editor,
+                                                    bitmap=GetBitmap(bitmap),
+                                                    size=wx.Size(28, 28),
+                                                    style=wx.NO_BORDER)
             button.SetToolTip(help)
             setattr(self, name, button)
             tasks_buttons_sizer.Add(button)
 
         self.TasksGrid = CustomGrid(self.Editor, style=wx.VSCROLL)
-        self.TasksGrid.Bind(wx.grid.EVT_GRID_CELL_CHANGED,
-                            self.OnTasksGridCellChange)
+        self.TasksGrid.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.OnTasksGridCellChange)
         tasks_sizer.Add(self.TasksGrid, flag=wx.GROW)
 
         instances_sizer = wx.FlexGridSizer(cols=1, hgap=0, rows=2, vgap=5)
@@ -274,48 +267,42 @@ class ResourceEditor(EditorPanel):
         main_sizer.Add(instances_sizer, border=5,
                        flag=wx.GROW | wx.BOTTOM | wx.LEFT | wx.RIGHT)
 
-        instances_buttons_sizer = wx.FlexGridSizer(
-            cols=5, hgap=5, rows=1, vgap=0)
+        instances_buttons_sizer = wx.FlexGridSizer(cols=5, hgap=5, rows=1, vgap=0)
         instances_buttons_sizer.AddGrowableCol(0)
         instances_buttons_sizer.AddGrowableRow(0)
         instances_sizer.Add(instances_buttons_sizer, flag=wx.GROW)
 
         instances_label = wx.StaticText(self.Editor, label=_(u'Instances:'))
-        instances_buttons_sizer.Add(
-            instances_label, flag=wx.ALIGN_BOTTOM)
+        instances_buttons_sizer.Add(instances_label, flag=wx.ALIGN_BOTTOM)
 
         for name, bitmap, help in [
                 ("AddInstanceButton", "add_element", _("Add instance")),
                 ("DeleteInstanceButton", "remove_element", _("Remove instance")),
                 ("UpInstanceButton", "up", _("Move instance up")),
                 ("DownInstanceButton", "down", _("Move instance down"))]:
-            button = wx.BitmapButton(parent=self.Editor,
-                                     bitmap=GetBitmap(bitmap),
-                                     size=wx.Size(28, 28),
-                                     style=wx.NO_BORDER)
+            button = wx.lib.buttons.GenBitmapButton(
+                self.Editor, bitmap=GetBitmap(bitmap),
+                size=wx.Size(28, 28), style=wx.NO_BORDER)
             button.SetToolTip(help)
             setattr(self, name, button)
             instances_buttons_sizer.Add(button)
 
         self.InstancesGrid = CustomGrid(self.Editor, style=wx.VSCROLL)
-        self.InstancesGrid.Bind(
-            wx.grid.EVT_GRID_CELL_CHANGED, self.OnInstancesGridCellChange)
+        self.InstancesGrid.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.OnInstancesGridCellChange)
         instances_sizer.Add(self.InstancesGrid, flag=wx.GROW)
 
         self.Editor.SetSizer(main_sizer)
 
     def __init__(self, parent, tagname, window, controler):
-        super().__init__(parent, tagname, window, controler)
+        EditorPanel.__init__(self, parent, tagname, window, controler)
 
         self.RefreshHighlightsTimer = wx.Timer(self, -1)
-        self.Bind(wx.EVT_TIMER, self.OnRefreshHighlightsTimer,
-                  self.RefreshHighlightsTimer)
+        self.Bind(wx.EVT_TIMER, self.OnRefreshHighlightsTimer, self.RefreshHighlightsTimer)
 
         self.TasksDefaultValue = {"Name": "task0", "Triggering": "Cyclic",
                                   "Single": "", "Interval": "T#20ms", "Priority": 0}
         self.TasksTable = ResourceTable(self, [], GetTasksTableColnames())
-        self.TasksTable.SetColAlignements(
-            [wx.ALIGN_LEFT, wx.ALIGN_LEFT, wx.ALIGN_LEFT, wx.ALIGN_RIGHT, wx.ALIGN_RIGHT])
+        self.TasksTable.SetColAlignements([wx.ALIGN_LEFT, wx.ALIGN_LEFT, wx.ALIGN_LEFT, wx.ALIGN_RIGHT, wx.ALIGN_RIGHT])
         self.TasksTable.SetColSizes([200, 100, 100, 150, 100])
         self.TasksGrid.SetTable(self.TasksTable)
         self.TasksGrid.SetButtons({"Add": self.AddTaskButton,
@@ -328,8 +315,7 @@ class ResourceEditor(EditorPanel):
                 row_content = self.TasksTable.data[new_row-1].copy()
                 old_name = row_content['Name']
                 row_content['Name'] =\
-                    self.Controler.GenerateNewName(
-                        self.TagName, old_name, old_name+'%d')
+                    self.Controler.GenerateNewName(self.TagName, old_name, old_name+'%d')
             else:
                 row_content = self.TasksDefaultValue.copy()
 
@@ -357,12 +343,9 @@ class ResourceEditor(EditorPanel):
         self.TasksTable.ResetView(self.TasksGrid)
         self.TasksGrid.RefreshButtons()
 
-        self.InstancesDefaultValue = {
-            "Name": "instance0", "Type": "", "Task": ""}
-        self.InstancesTable = ResourceTable(
-            self, [], GetInstancesTableColnames())
-        self.InstancesTable.SetColAlignements(
-            [wx.ALIGN_LEFT, wx.ALIGN_LEFT, wx.ALIGN_LEFT])
+        self.InstancesDefaultValue = {"Name": "instance0", "Type": "", "Task": ""}
+        self.InstancesTable = ResourceTable(self, [], GetInstancesTableColnames())
+        self.InstancesTable.SetColAlignements([wx.ALIGN_LEFT, wx.ALIGN_LEFT, wx.ALIGN_LEFT])
         self.InstancesTable.SetColSizes([200, 150, 150])
         self.InstancesGrid.SetTable(self.InstancesTable)
         self.InstancesGrid.SetButtons({"Add": self.AddInstanceButton,
@@ -375,8 +358,7 @@ class ResourceEditor(EditorPanel):
                 row_content = self.InstancesTable.data[new_row - 1].copy()
                 old_name = row_content['Name']
                 row_content['Name'] =\
-                    self.Controler.GenerateNewName(
-                        self.TagName, old_name, old_name+'%d')
+                    self.Controler.GenerateNewName(self.TagName, old_name, old_name+'%d')
             else:
                 row_content = self.InstancesDefaultValue.copy()
 
@@ -393,8 +375,7 @@ class ResourceEditor(EditorPanel):
         setattr(self.InstancesGrid, "_DeleteRow", _DeleteInstance)
 
         def _MoveInstance(row, move):
-            new_row = max(
-                0, min(row + move, self.InstancesTable.GetNumberRows() - 1))
+            new_row = max(0, min(row + move, self.InstancesTable.GetNumberRows() - 1))
             if new_row != row:
                 if self.InstancesTable.GetValueByName(row, "Task") != self.InstancesTable.GetValueByName(new_row, "Task"):
                     return row
@@ -435,8 +416,7 @@ class ResourceEditor(EditorPanel):
     def RefreshTaskList(self):
         self.TaskList = ""
         for row in range(self.TasksTable.GetNumberRows()):
-            self.TaskList += ",%s" % self.TasksTable.GetValueByName(
-                row, "Name")
+            self.TaskList += ",%s" % self.TasksTable.GetValueByName(row, "Name")
 
     def RefreshVariableList(self):
         self.VariableList = ""
@@ -444,8 +424,7 @@ class ResourceEditor(EditorPanel):
             self.VariableList += ",%s" % variable
 
     def RefreshModel(self):
-        self.Controler.SetEditedResourceInfos(
-            self.TagName, self.TasksTable.GetData(), self.InstancesTable.GetData())
+        self.Controler.SetEditedResourceInfos(self.TagName, self.TasksTable.GetData(), self.InstancesTable.GetData())
         self.RefreshBuffer()
 
     # Buffer the last model state
@@ -484,8 +463,7 @@ class ResourceEditor(EditorPanel):
         self.InstancesGrid.RefreshButtons()
 
     def ShowErrorMessage(self, message):
-        dialog = wx.MessageDialog(
-            self, message, _("Error"), wx.OK | wx.ICON_ERROR)
+        dialog = wx.MessageDialog(self, message, _("Error"), wx.OK | wx.ICON_ERROR)
         dialog.ShowModal()
         dialog.Destroy()
 
@@ -506,8 +484,7 @@ class ResourceEditor(EditorPanel):
                 wx.CallAfter(self.ShowErrorMessage, message)
                 return
 
-            tasklist = [name for name in self.TaskList.split(
-                ",") if name != ""]
+            tasklist = [name for name in self.TaskList.split(",") if name != ""]
             for i in range(self.TasksTable.GetNumberRows()):
                 task = self.TasksTable.GetValueByName(i, "Name")
                 if task in tasklist:
@@ -516,8 +493,7 @@ class ResourceEditor(EditorPanel):
                 old_name = tasklist[0].upper()
                 new_name = self.TasksTable.GetValue(row, col)
                 for i in range(self.InstancesTable.GetNumberRows()):
-                    name = self.InstancesTable.GetValueByName(
-                        i, "Task").upper()
+                    name = self.InstancesTable.GetValueByName(i, "Task").upper()
                     if old_name == name:
                         self.InstancesTable.SetValueByName(i, "Task", new_name)
         if self.TasksTable.GetColLabelValue(col, False) == "Triggering":
@@ -565,8 +541,7 @@ class ResourceEditor(EditorPanel):
             self.TasksTable.AddHighlight(infos[1:], highlight_type)
         elif infos[0] == "instance":
             self.InstancesTable.AddHighlight(infos[1:], highlight_type)
-        self.RefreshHighlightsTimer.Start(
-            int(REFRESH_HIGHLIGHT_PERIOD * 1000), oneShot=True)
+        self.RefreshHighlightsTimer.Start(int(REFRESH_HIGHLIGHT_PERIOD * 1000), oneShot=True)
 
     def ClearHighlights(self, highlight_type=None):
         EditorPanel.ClearHighlights(self, highlight_type)

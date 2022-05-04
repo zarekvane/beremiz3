@@ -26,11 +26,12 @@
 Minimal tab controller for a simple text editor
 """
 
+# 
 
 import os
 
 
-class MiniTextControler:
+class MiniTextControler(object):
 
     def __init__(self, filepath, controller):
         self.FilePath = filepath
@@ -43,7 +44,7 @@ class MiniTextControler:
         return ""
 
     def SetEditedElementText(self, tagname, text):
-        file = open(self.FilePath, "w")
+        file = open(self.FilePath, "w", encoding='utf-8')
         file.write(text)
         file.close()
 

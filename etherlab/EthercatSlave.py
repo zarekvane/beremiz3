@@ -10,14 +10,12 @@
 # See COPYING file for copyrights details.
 
 
-
-from PLCControler import LOCATION_CONFNODE, LOCATION_VAR_INPUT, LOCATION_VAR_OUTPUT, LOCATION_VAR_MEMORY
 from ConfigTreeNode import ConfigTreeNode
-
-from etherlab.ConfigEditor import NodeEditor
-
+from PLCControler import LOCATION_CONFNODE, LOCATION_VAR_INPUT, LOCATION_VAR_OUTPUT, LOCATION_VAR_MEMORY
 # ------------------------------------------
 from etherlab.CommonEtherCATFunction import _CommonSlave
+from etherlab.ConfigEditor import NodeEditor
+
 # ------------------------------------------
 
 
@@ -66,7 +64,7 @@ def ExtractName(names, default=None):
 #                    Ethercat Node
 # --------------------------------------------------
 
-class _EthercatSlaveCTN:
+class _EthercatSlaveCTN(object):
     NODE_PROFILE = None
     EditorType = NodeEditor
 
@@ -166,4 +164,4 @@ class _EthercatSlaveCTN:
         }
 
     def CTNGenerate_C(self, buildpath, locations):
-        return [], "", False
+        return [], "", False, []

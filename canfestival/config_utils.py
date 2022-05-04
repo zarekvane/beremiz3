@@ -22,9 +22,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+
+import getopt
 import os
 import sys
-import getopt
+
+from past.builtins import long
 
 # Translation between IEC types and Can Open types
 IECToCOType = {
@@ -59,7 +62,7 @@ PDOTypeBaseCobId = {RPDO: 0x200, TPDO: 0x180}
 VariableIncrement = 0x100
 VariableStartIndex = {TPDO: 0x2000, RPDO: 0x4000}
 VariableDirText = {TPDO: "__I", RPDO: "__Q"}
-VariableTypeOffset = dict(zip(["", "X", "B", "W", "D", "L"], range(6)))
+VariableTypeOffset = dict(list(zip(["", "X", "B", "W", "D", "L"], list(range(6)))))
 
 TrashVariables = [(1, 0x01), (8, 0x05), (16, 0x06), (32, 0x07), (64, 0x1B)]
 
@@ -81,7 +84,7 @@ def LE_to_BE(value, size):
     """
 
     data = ("%" + str(size * 2) + "." + str(size * 2) + "X") % value
-    list_car = [data[i:i+2] for i in range(0, len(data), 2)]
+    list_car = [data[i:i + 2] for i in list(range(0, len(data), 2))]
     list_car.reverse()
     return "".join([chr(int(car, 16)) for car in list_car])
 
@@ -156,7 +159,7 @@ def GeneratePDOMappingDCF(idx, cobid, transmittype, pdomapping):
     return "".join(dcfdata), len(dcfdata)
 
 
-class ConciseDCFGenerator:
+class ConciseDCFGenerator(object):
 
     def __init__(self, nodelist, nodename):
         # Dictionary of location informations classed by name
@@ -166,7 +169,7 @@ class ConciseDCFGenerator:
         # Dictionary of location informations classed by name
         self.MasterMapping = {}
         # List of COB IDs available
-        self.ListCobIDAvailable = range(0x180, 0x580)
+        self.ListCobIDAvailable = list(range(0x180, 0x580))
         # Dictionary of mapping value where unexpected variables are stored
         self.TrashVariables = {}
         # Dictionary of pointed variables
@@ -299,7 +302,7 @@ class ConciseDCFGenerator:
             values = self.NodeList.GetSlaveNodeEntry(nodeid, index + 0x200)
             if values is not None and values[0] > 0:
                 # Check that all subindex upper than 0 equal 0 => configurable PDO
-                if reduce(lambda x, y: x and y, map(lambda x: x == 0, values[1:]), True):
+                if reduce(lambda x, y: x and y, list(map(lambda x: x == 0, values[1:])), True):
                     cobid = self.NodeList.GetSlaveNodeEntry(nodeid, index, 1)
                     # If no COB ID defined in PDO, generate a new one (not used)
                     if cobid == 0:
@@ -370,7 +373,7 @@ class ConciseDCFGenerator:
                 nodeid, index, subindex = loc[:3]
 
                 # Check Id is in slave node list
-                if nodeid not in self.NodeList.SlaveNodes.keys():
+                if nodeid not in list(self.NodeList.SlaveNodes.keys()):
                     raise PDOmappingException(
                         _("Non existing node ID : {a1} (variable {a2})").
                         format(a1=nodeid, a2=name))
@@ -437,7 +440,7 @@ class ConciseDCFGenerator:
                 cobid = self.NodeList.GetSlaveNodeEntry(locationinfos["nodeid"], index - 0x200, 1)
 
                 # Add PDO to MasterMapping
-                if cobid not in self.MasterMapping.keys():
+                if cobid not in list(self.MasterMapping.keys()):
                     # Verify that PDO transmit type is conform to sync_TPDOs
                     transmittype = self.NodeList.GetSlaveNodeEntry(locationinfos["nodeid"], index - 0x200, 2)
                     if sync_TPDOs and transmittype != 0x01 or transmittype != 0xFF:
@@ -470,7 +473,7 @@ class ConciseDCFGenerator:
 
             else:
                 # Add location to those that haven't been mapped yet
-                if locationinfos["nodeid"] not in self.LocationsNotMapped.keys():
+                if locationinfos["nodeid"] not in list(self.LocationsNotMapped.keys()):
                     self.LocationsNotMapped[locationinfos["nodeid"]] = {TPDO: [], RPDO: []}
                 self.LocationsNotMapped[locationinfos["nodeid"]][locationinfos["pdotype"]].append((name, locationinfos))
 
@@ -568,7 +571,7 @@ class ConciseDCFGenerator:
                     continue
                 new_index = False
 
-                if isinstance(variable, int):
+                if isinstance(variable, (int, long)):
                     # If variable is an integer then variable is unexpected
                     self.MasterNode.SetEntry(current_idx + 0x200, subindex, self.TrashVariables[variable])
                 else:
@@ -731,7 +734,7 @@ Options:
 
     # Extract workspace base folder
     base_folder = sys.path[0]
-    for i in range(3):
+    for i in list(range(3)):
         base_folder = os.path.split(base_folder)[0]
     # Add CanFestival folder to search pathes
     sys.path.append(os.path.join(base_folder, "CanFestival-3", "objdictgen"))
@@ -774,13 +777,13 @@ Options:
     # If reset has been choosen
     if reset:
         # Write Text into reference result file
-        testfile = open("test_config/result.txt", "w")
+        testfile = open("test_config/result.txt", "w", encoding='utf-8')
         testfile.write(result)
         testfile.close()
 
         print("Reset Successful!")
     else:
-        testfile = open("test_config/result_tmp.txt", "w")
+        testfile = open("test_config/result_tmp.txt", "w", encoding='utf-8')
         testfile.write(result)
         testfile.close()
 

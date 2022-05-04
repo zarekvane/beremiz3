@@ -23,7 +23,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
 import wx
 import wx.grid
 
@@ -31,7 +30,7 @@ import wx.grid
 class CustomGrid(wx.grid.Grid):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        wx.grid.Grid.__init__(self, *args, **kwargs)
 
         self.Editable = True
 

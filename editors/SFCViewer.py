@@ -24,14 +24,8 @@
 
 
 
-
-
-import wx
-
 from editors.Viewer import *
 from graphics.SFC_Objects import *
-from graphics.GraphicCommons import SELECTION_DIVERGENCE, \
-    SELECTION_CONVERGENCE, SIMULTANEOUS_DIVERGENCE, SIMULTANEOUS_CONVERGENCE, EAST, NORTH, WEST, SOUTH
 
 SFC_Objects = (SFC_Step, SFC_ActionBlock, SFC_Transition, SFC_Divergence, SFC_Jump)
 
@@ -85,7 +79,7 @@ class SFC_Viewer(Viewer):
     }
 
     def __init__(self, parent, tagname, window, controler, debug=False, instancepath=""):
-        super().__init__(parent, tagname, window, controler, debug, instancepath)
+        Viewer.__init__(self, parent, tagname, window, controler, debug, instancepath)
         self.CurrentLanguage = "SFC"
 
     def ConnectConnectors(self, start, end):
@@ -101,7 +95,7 @@ class SFC_Viewer(Viewer):
 
     def CreateTransition(self, connector, next=None):
         previous = connector.GetParentBlock()
-        id = self.GetNewId()
+        id = self.GetNewIdRef()
         transition = SFC_Transition(self, "reference", "", 0, id)
         pos = connector.GetPosition(False)
         transition.SetPosition(pos.x, pos.y + SFC_WIRE_MIN_SIZE)
@@ -111,7 +105,7 @@ class SFC_Viewer(Viewer):
             previous.RefreshConnectedPosition(connector)
         else:
             previous.RefreshOutputPosition()
-        wire.SetPoints([wxpatch.Point(pos.x, pos.y + GetWireSize(previous)), wxpatch.Point(pos.x, pos.y)])
+        wire.SetPoints([wx.Point(pos.x, pos.y + GetWireSize(previous)), wx.Point(pos.x, pos.y)])
         self.AddBlock(transition)
         self.Controler.AddEditedElementTransition(self.TagName, id)
         self.RefreshTransitionModel(transition)
@@ -121,7 +115,7 @@ class SFC_Viewer(Viewer):
             next_block = next.GetParentBlock()
             next_pos = next.GetPosition(False)
             transition.RefreshOutputPosition((0, pos.y + SFC_WIRE_MIN_SIZE - next_pos.y))
-            wire.SetPoints([wxpatch.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wxpatch.Point(pos.x, pos.y)])
+            wire.SetPoints([wx.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wx.Point(pos.x, pos.y)])
             if isinstance(next_block, SFC_Divergence):
                 next_block.RefreshPosition()
             transition.RefreshOutputModel(True)
@@ -151,7 +145,7 @@ class SFC_Viewer(Viewer):
 
     def CreateStep(self, name, connector, next=None):
         previous = connector.GetParentBlock()
-        id = self.GetNewId()
+        id = self.GetNewIdRef()
         step = SFC_Step(self, name, False, id)
         if next:
             step.AddOutput()
@@ -165,7 +159,7 @@ class SFC_Viewer(Viewer):
             previous.RefreshConnectedPosition(connector)
         else:
             previous.RefreshOutputPosition()
-        wire.SetPoints([wxpatch.Point(pos.x, pos.y + GetWireSize(previous)), wxpatch.Point(pos.x, pos.y)])
+        wire.SetPoints([wx.Point(pos.x, pos.y + GetWireSize(previous)), wx.Point(pos.x, pos.y)])
         self.AddBlock(step)
         self.Controler.AddEditedElementStep(self.TagName, id)
         self.RefreshStepModel(step)
@@ -175,7 +169,7 @@ class SFC_Viewer(Viewer):
             next_block = next.GetParentBlock()
             next_pos = next.GetPosition(False)
             step.RefreshOutputPosition((0, pos.y + SFC_WIRE_MIN_SIZE - next_pos.y))
-            wire.SetPoints([wxpatch.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wxpatch.Point(pos.x, pos.y)])
+            wire.SetPoints([wx.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wx.Point(pos.x, pos.y)])
             if isinstance(next_block, SFC_Divergence):
                 next_block.RefreshPosition()
             step.RefreshOutputModel(True)
@@ -449,7 +443,7 @@ class SFC_Viewer(Viewer):
         dialog.SetVariables(self.Controler.GetEditedElementInterfaceVars(self.TagName, debug=self.Debug))
         dialog.SetStepNames([block.GetName() for block in self.Blocks if isinstance(block, SFC_Step)])
         if dialog.ShowModal() == wx.ID_OK:
-            id = self.GetNewId()
+            id = self.GetNewIdRef()
             name = dialog.GetValue()
             step = SFC_Step(self, name, True, id)
             min_width, min_height = step.GetMinSize()
@@ -532,12 +526,12 @@ class SFC_Viewer(Viewer):
                     self.RefreshStepModel(self.SelectedElement)
                     connectors = self.SelectedElement.GetConnectors()
                     pos = connectors["action"].GetPosition(False)
-                    id = self.GetNewId()
+                    id = self.GetNewIdRef()
                     actionblock = SFC_ActionBlock(self, [], id)
                     actionblock.SetPosition(pos.x + SFC_WIRE_MIN_SIZE, pos.y - SFC_STEP_DEFAULT_SIZE[1] // 2)
                     actionblock_connector = actionblock.GetConnector()
                     wire = self.ConnectConnectors(actionblock_connector, connectors["action"])
-                    wire.SetPoints([wxpatch.Point(pos.x + SFC_WIRE_MIN_SIZE, pos.y), wxpatch.Point(pos.x, pos.y)])
+                    wire.SetPoints([wx.Point(pos.x + SFC_WIRE_MIN_SIZE, pos.y), wx.Point(pos.x, pos.y)])
                     actionblock.SetActions(actions)
                     self.AddBlock(actionblock)
                     self.Controler.AddEditedElementActionBlock(self.TagName, id)
@@ -580,7 +574,7 @@ class SFC_Viewer(Viewer):
                             next = None
                     else:
                         return
-                    id = self.GetNewId()
+                    id = self.GetNewIdRef()
                     divergence = SFC_Divergence(self, SELECTION_DIVERGENCE, value["number"], id)
                     pos = previous.GetPosition(False)
                     previous_block = previous.GetParentBlock()
@@ -589,7 +583,7 @@ class SFC_Viewer(Viewer):
                     divergence_connectors = divergence.GetConnectors()
                     wire = self.ConnectConnectors(divergence_connectors["inputs"][0], previous)
                     previous_block.RefreshOutputPosition()
-                    wire.SetPoints([wxpatch.Point(pos.x, pos.y + wire_size), wxpatch.Point(pos.x, pos.y)])
+                    wire.SetPoints([wx.Point(pos.x, pos.y + wire_size), wx.Point(pos.x, pos.y)])
                     self.AddBlock(divergence)
                     self.Controler.AddEditedElementDivergence(self.TagName, id, value["type"])
                     self.RefreshDivergenceModel(divergence)
@@ -601,7 +595,7 @@ class SFC_Viewer(Viewer):
                             next_block = next.GetParentBlock()
                             divergence.RefreshOutputPosition((0, pos.y + SFC_WIRE_MIN_SIZE - next_pos.y))
                             divergence.RefreshConnectedPosition(connector)
-                            wire.SetPoints([wxpatch.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wxpatch.Point(pos.x, pos.y)])
+                            wire.SetPoints([wx.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wx.Point(pos.x, pos.y)])
                             next_block.RefreshModel()
                             next = None
                         else:
@@ -638,7 +632,7 @@ class SFC_Viewer(Viewer):
                         previous = transition_connectors["output"]
                     else:
                         return
-                    id = self.GetNewId()
+                    id = self.GetNewIdRef()
                     divergence = SFC_Divergence(self, SIMULTANEOUS_DIVERGENCE, value["number"], id)
                     pos = previous.GetPosition(False)
                     previous_block = previous.GetParentBlock()
@@ -647,7 +641,7 @@ class SFC_Viewer(Viewer):
                     divergence_connectors = divergence.GetConnectors()
                     wire = self.ConnectConnectors(divergence_connectors["inputs"][0], previous)
                     previous_block.RefreshOutputPosition()
-                    wire.SetPoints([wxpatch.Point(pos.x, pos.y + wire_size), wxpatch.Point(pos.x, pos.y)])
+                    wire.SetPoints([wx.Point(pos.x, pos.y + wire_size), wx.Point(pos.x, pos.y)])
                     self.AddBlock(divergence)
                     self.Controler.AddEditedElementDivergence(self.TagName, id, value["type"])
                     self.RefreshDivergenceModel(divergence)
@@ -659,7 +653,7 @@ class SFC_Viewer(Viewer):
                             next_block = next.GetParentBlock()
                             divergence.RefreshOutputPosition((0, pos.y + SFC_WIRE_MIN_SIZE - next_pos.y))
                             divergence.RefreshConnectedPosition(connector)
-                            wire.SetPoints([wxpatch.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wxpatch.Point(pos.x, pos.y)])
+                            wire.SetPoints([wx.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wx.Point(pos.x, pos.y)])
                             next_block.RefreshModel()
                             next = None
                         else:
@@ -713,7 +707,7 @@ class SFC_Viewer(Viewer):
                         pos = input.GetPosition(False)
                         wire = self.ConnectConnectors(divergence_connectors["inputs"][i], input)
                         wire_size = GetWireSize(input)
-                        wire.SetPoints([wxpatch.Point(pos.x, pos.y + wire_size), wxpatch.Point(pos.x, pos.y)])
+                        wire.SetPoints([wx.Point(pos.x, pos.y + wire_size), wx.Point(pos.x, pos.y)])
                         input_block = input.GetParentBlock()
                         input_block.RefreshOutputPosition()
                     divergence.RefreshPosition()
@@ -729,7 +723,7 @@ class SFC_Viewer(Viewer):
                         next_block = next.GetParentBlock()
                         divergence.RefreshOutputPosition((0, pos.y + SFC_WIRE_MIN_SIZE - next_pos.y))
                         divergence.RefreshConnectedPosition(divergence_connectors["outputs"][0])
-                        wire.SetPoints([wxpatch.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wxpatch.Point(pos.x, pos.y)])
+                        wire.SetPoints([wx.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wx.Point(pos.x, pos.y)])
                         next_block.RefreshModel()
                     else:
                         if value["type"] == SELECTION_CONVERGENCE:
@@ -801,7 +795,7 @@ class SFC_Viewer(Viewer):
                 jump_connector = jump.GetConnector()
                 wire = self.ConnectConnectors(jump_connector, transition_connectors["output"])
                 transition.RefreshOutputPosition()
-                wire.SetPoints([wxpatch.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wxpatch.Point(pos.x, pos.y)])
+                wire.SetPoints([wx.Point(pos.x, pos.y + SFC_WIRE_MIN_SIZE), wx.Point(pos.x, pos.y)])
                 self.RefreshJumpModel(jump)
                 self.RefreshBuffer()
                 self.RefreshScrollBars()
@@ -883,7 +877,7 @@ class SFC_Viewer(Viewer):
                         next_pos = next.GetPosition(False)
                         wire_size = GetWireSize(previous_block)
                         previous_block.RefreshOutputPosition((0, pos.y + wire_size - next_pos.y))
-                        wire.SetPoints([wxpatch.Point(pos.x, pos.y + wire_size), wxpatch.Point(pos.x, pos.y)])
+                        wire.SetPoints([wx.Point(pos.x, pos.y + wire_size), wx.Point(pos.x, pos.y)])
                         if isinstance(next_block, SFC_Divergence):
                             next_block.RefreshPosition()
                         previous_block.RefreshOutputModel(True)
@@ -995,8 +989,8 @@ class SFC_Viewer(Viewer):
                     next_pos = next.GetPosition(False)
                     wire_size = GetWireSize(previous_block)
                     previous_block.RefreshOutputPosition((0, previous_pos.y + wire_size - next_pos.y))
-                    wire.SetPoints([wxpatch.Point(previous_pos.x, previous_pos.y + wire_size),
-                                    wxpatch.Point(previous_pos.x, previous_pos.y)])
+                    wire.SetPoints([wx.Point(previous_pos.x, previous_pos.y + wire_size),
+                                    wx.Point(previous_pos.x, previous_pos.y)])
                     if isinstance(next_block, SFC_Divergence):
                         next_block.RefreshPosition()
                     previous_block.RefreshOutputModel(True)
@@ -1025,8 +1019,8 @@ class SFC_Viewer(Viewer):
                 next_pos = next.GetPosition(False)
                 wire_size = GetWireSize(previous_block)
                 previous_block.RefreshOutputPosition((previous_pos.x - next_pos.x, previous_pos.y + wire_size - next_pos.y))
-                wire.SetPoints([wxpatch.Point(previous_pos.x, previous_pos.y + wire_size),
-                                wxpatch.Point(previous_pos.x, previous_pos.y)])
+                wire.SetPoints([wx.Point(previous_pos.x, previous_pos.y + wire_size),
+                                wx.Point(previous_pos.x, previous_pos.y)])
                 if isinstance(next_block, SFC_Divergence):
                     next_block.RefreshPosition()
                 previous_block.RefreshOutputModel(True)

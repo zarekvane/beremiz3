@@ -3,12 +3,12 @@
 # This file is part of Beremiz.
 # See COPYING file for copyrights details.
 
-
+# 
 from plcopen.XSLTModelQuery import XSLTModelQuery
 from plcopen.types_enums import *
 
 
-class InstanceTagName:
+class InstanceTagName(object):
     """Helpers object for generating instance tagname"""
 
     def __init__(self):
@@ -35,16 +35,16 @@ class InstanceTagName:
 
 class InstanceTagnameCollector(XSLTModelQuery):
     """ object for collecting instances path list"""
-
     def __init__(self, controller):
-        super().__init__(controller,
-                         "instance_tagname.xslt",
-                         [(name, self.FactoryCaller(name))
-                          for name in ["ConfigTagName",
-                                       "ResourceTagName",
-                                       "PouTagName",
-                                       "ActionTagName",
-                                       "TransitionTagName"]])
+        XSLTModelQuery.__init__(self,
+                                controller,
+                                "instance_tagname.xslt",
+                                [(name, self.FactoryCaller(name))
+                                 for name in ["ConfigTagName",
+                                              "ResourceTagName",
+                                              "PouTagName",
+                                              "ActionTagName",
+                                              "TransitionTagName"]])
 
     def FactoryCaller(self, funcname):
         def CallFactory(*args):

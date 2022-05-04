@@ -3,7 +3,7 @@
 # This file is part of Beremiz
 # See COPYING file for copyrights details.
 
-
+# 
 from util.TranslationCatalogs import NoTranslate
 _ = NoTranslate
 

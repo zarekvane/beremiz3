@@ -23,18 +23,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-from overrides import overrides
-import wx
-from math import sqrt
 
-from graphics.GraphicCommons import *
+
+
 from graphics.DebugDataConsumer import DebugDataConsumer
-from plcopen.structures import *
-
-
+from graphics.GraphicCommons import *
 # -------------------------------------------------------------------------------
 #                         Ladder Diagram PowerRail
 # -------------------------------------------------------------------------------
+from .Graphic_Element import Graphic_Element, Connector
+
+
 
 
 class LD_PowerRail(Graphic_Element):
@@ -44,7 +43,7 @@ class LD_PowerRail(Graphic_Element):
 
     # Create a new power rail
     def __init__(self, parent, type, id=None, connectors=1):
-        super().__init__(parent)
+        Graphic_Element.__init__(self, parent)
         self.Type = None
         self.Connectors = []
         self.RealConnectors = None
@@ -71,8 +70,8 @@ class LD_PowerRail(Graphic_Element):
         return powerrail
 
     def GetConnectorTranslation(self, element):
-        return dict(zip([connector for connector in self.Connectors],
-                        [connector for connector in element.Connectors]))
+        return dict(list(zip([connector for connector in self.Connectors],
+                             [connector for connector in element.Connectors])))
 
     # Returns the RedrawRect
     def GetRedrawRect(self, movex=0, movey=0):
@@ -82,12 +81,10 @@ class LD_PowerRail(Graphic_Element):
         if movex != 0 or movey != 0:
             for connector in self.Connectors:
                 if connector.IsConnected():
-                    rect = rect.Union(
-                        connector.GetConnectedRedrawRect(movex, movey))
+                    rect = rect.Union(connector.GetConnectedRedrawRect(movex, movey))
         return rect
 
     # Forbids to change the power rail size
-    @overrides
     def SetSize(self, width, height):
         if self.Parent.GetDrawingMode() == FREEDRAWING_MODE:
             Graphic_Element.SetSize(self, width, height)
@@ -96,14 +93,12 @@ class LD_PowerRail(Graphic_Element):
         self.RefreshConnectors()
 
     # Forbids to select a power rail
-    @overrides
     def HitTest(self, pt, connectors=True):
         if self.Parent.GetDrawingMode() == FREEDRAWING_MODE:
             return Graphic_Element.HitTest(self, pt, connectors) or self.TestConnector(pt, exclude=False) is not None
         return False
 
     # Forbids to select a power rail
-    @overrides
     def IsInSelection(self, rect):
         if self.Parent.GetDrawingMode() == FREEDRAWING_MODE:
             return Graphic_Element.IsInSelection(self, rect)
@@ -116,18 +111,15 @@ class LD_PowerRail(Graphic_Element):
     # Unconnect all connectors
     def Clean(self):
         for connector in self.Connectors:
-            connector.UnConnect(
-                delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
+            connector.UnConnect(delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
 
     # Refresh the power rail bounding box
     def RefreshBoundingBox(self):
-        self.BoundingBox = wxpatch.Rect(
-            self.Pos.x, self.Pos.y, self.Size[0] + 1, self.Size[1] + 1)
+        self.BoundingBox = wx.Rect(self.Pos.x, self.Pos.y, self.Size[0] + 1, self.Size[1] + 1)
 
     # Refresh the power rail size
     def RefreshSize(self):
-        self.Size = wx.Size(LD_POWERRAIL_WIDTH, max(
-            LD_LINE_SIZE * len(self.Connectors), self.Size[1]))
+        self.Size = wx.Size(LD_POWERRAIL_WIDTH, max(LD_LINE_SIZE * len(self.Connectors), self.Size[1]))
         self.RefreshBoundingBox()
 
     # Returns the block minimum size
@@ -143,10 +135,9 @@ class LD_PowerRail(Graphic_Element):
     # Add a connector or a blank to this power rail at the place given
     def InsertConnector(self, idx):
         if self.Type == LEFTRAIL:
-            connector = Connector(
-                self, "", "BOOL", wxpatch.Point(self.Size[0], 0), EAST)
+            connector = Connector(self, "", "BOOL", wx.Point(self.Size[0], 0), EAST)
         elif self.Type == RIGHTRAIL:
-            connector = Connector(self, "", "BOOL", wxpatch.Point(0, 0), WEST)
+            connector = Connector(self, "", "BOOL", wx.Point(0, 0), WEST)
         self.Connectors.insert(idx, connector)
         self.RefreshSize()
         self.RefreshConnectors()
@@ -154,7 +145,7 @@ class LD_PowerRail(Graphic_Element):
     # Moves the divergence connector given
     def MoveConnector(self, connector, movey):
         position = connector.GetRelPosition()
-        connector.SetPosition(wxpatch.Point(position.x, position.y + movey))
+        connector.SetPosition(wx.Point(position.x, position.y + movey))
         miny = self.Size[1]
         maxy = 0
         for connect in self.Connectors:
@@ -166,9 +157,8 @@ class LD_PowerRail(Graphic_Element):
         if min_pos == self.Pos.y:
             for connect in self.Connectors:
                 connect_pos = connect.GetRelPosition()
-                connect.SetPosition(
-                    wxpatch.Point(connect_pos.x, connect_pos.y - miny))
-        self.Connectors.sort(key=lambda x: x.Pos.y)
+                connect.SetPosition(wx.Point(connect_pos.x, connect_pos.y - miny))
+        self.Connectors.sort(lambda x, y: operator.eq(x.Pos.y, y.Pos.y))
         maxy = 0
         for connect in self.Connectors:
             connect_pos = connect.GetRelPosition()
@@ -196,17 +186,15 @@ class LD_PowerRail(Graphic_Element):
         interval = height / max(len(self.Connectors) - 1, 1)
         for i, connector in enumerate(self.Connectors):
             if self.RealConnectors:
-                position = self.Extensions[0] + \
-                    int(round(self.RealConnectors[i] * height))
+                position = self.Extensions[0] + int(round(self.RealConnectors[i] * height))
             else:
                 position = self.Extensions[0] + int(round(i * interval))
             if scaling is not None:
-                position = round(
-                    (self.Pos.y + position) / scaling[1]) * scaling[1] - self.Pos.y
+                position = round((self.Pos.y + position) / scaling[1]) * scaling[1] - self.Pos.y
             if self.Type == LEFTRAIL:
-                connector.SetPosition(wxpatch.Point(self.Size[0], position))
+                connector.SetPosition(wx.Point(self.Size[0], position))
             elif self.Type == RIGHTRAIL:
-                connector.SetPosition(wxpatch.Point(0, position))
+                connector.SetPosition(wx.Point(0, position))
         self.RefreshConnected()
 
     # Refresh the position of wires connected to power rail
@@ -262,11 +250,9 @@ class LD_PowerRail(Graphic_Element):
         if height > 0:
             for connector in self.Connectors:
                 position = connector.GetRelPosition()
-                self.RealConnectors.append(
-                    max(0., min((position.y - self.Extensions[0]) / height, 1.)))
+                self.RealConnectors.append(max(0., min((position.y - self.Extensions[0]) / height, 1.)))
         elif len(self.Connectors) > 1:
-            self.RealConnectors = map(
-                lambda x: x * 1 / (len(self.Connectors) - 1), range(len(self.Connectors)))
+            self.RealConnectors = list(map(lambda x: x * 1 / (len(self.Connectors) - 1), range(len(self.Connectors))))
         else:
             self.RealConnectors = [0.5]
         Graphic_Element.OnLeftDown(self, event, dc, scaling)
@@ -325,8 +311,7 @@ class LD_PowerRail(Graphic_Element):
             movey = max(-self.BoundingBox.y, movey)
             if scaling is not None:
                 position = handle.GetRelPosition()
-                movey = round((self.Pos.y + position.y + movey) /
-                              scaling[1]) * scaling[1] - self.Pos.y - position.y
+                movey = round((self.Pos.y + position.y + movey) / scaling[1]) * scaling[1] - self.Pos.y - position.y
             self.MoveConnector(handle, movey)
             return 0, movey
         elif self.Parent.GetDrawingMode() == FREEDRAWING_MODE:
@@ -349,11 +334,9 @@ class LD_PowerRail(Graphic_Element):
         dc.SetBrush(wx.BLACK_BRUSH)
         # Draw a rectangle with the power rail size
         if self.Type == LEFTRAIL:
-            wxpatch.DrawRectangle(dc, self.Pos.x + self.Size[0] - LD_POWERRAIL_WIDTH,
-                             self.Pos.y, LD_POWERRAIL_WIDTH + 1, self.Size[1] + 1)
+            dc.DrawRectangle(self.Pos.x + self.Size[0] - LD_POWERRAIL_WIDTH, self.Pos.y, LD_POWERRAIL_WIDTH + 1, self.Size[1] + 1)
         else:
-            wxpatch.DrawRectangle(dc, self.Pos.x, self.Pos.y,
-                             LD_POWERRAIL_WIDTH + 1, self.Size[1] + 1)
+            dc.DrawRectangle(self.Pos.x, self.Pos.y, LD_POWERRAIL_WIDTH + 1, self.Size[1] + 1)
         # Draw connectors
         for connector in self.Connectors:
             connector.Draw(dc)
@@ -379,10 +362,8 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
         self.Size = wx.Size(LD_ELEMENT_SIZE[0], LD_ELEMENT_SIZE[1])
         self.Highlights = {}
         # Create an input and output connector
-        self.Input = Connector(self, "", "BOOL",
-                               wxpatch.Point(0, self.Size[1] // 2 + 1), WEST)
-        self.Output = Connector(self, "", "BOOL",
-                                wxpatch.Point(self.Size[0], self.Size[1] // 2 + 1), EAST)
+        self.Input = Connector(self, "", "BOOL", wx.Point(0, self.Size[1] // 2 + 1), WEST)
+        self.Output = Connector(self, "", "BOOL", wx.Point(self.Size[0], self.Size[1] // 2 + 1), EAST)
         self.PreviousValue = False
         self.PreviousSpreading = False
         self.RefreshNameSize()
@@ -459,11 +440,9 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
         rect = rect.Union(self.Output.GetRedrawRect(movex, movey))
         if movex != 0 or movey != 0:
             if self.Input.IsConnected():
-                rect = rect.Union(
-                    self.Input.GetConnectedRedrawRect(movex, movey))
+                rect = rect.Union(self.Input.GetConnectedRedrawRect(movex, movey))
             if self.Output.IsConnected():
-                rect = rect.Union(
-                    self.Output.GetConnectedRedrawRect(movex, movey))
+                rect = rect.Union(self.Output.GetConnectedRedrawRect(movex, movey))
         return rect
 
     def ProcessDragging(self, movex, movey, event, scaling):
@@ -483,10 +462,8 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
 
     # Unconnect input and output
     def Clean(self):
-        self.Input.UnConnect(
-            delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
-        self.Output.UnConnect(
-            delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
+        self.Input.UnConnect(delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
+        self.Output.UnConnect(delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
 
     # Refresh the size of text for name
     def RefreshNameSize(self):
@@ -524,7 +501,7 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
             bbx_width = self.Size[0]
             bbx_y = self.Pos.y
             bbx_height = self.Size[1]
-        self.BoundingBox = wxpatch.Rect(bbx_x, bbx_y, bbx_width + 1, bbx_height + 1)
+        self.BoundingBox = wx.Rect(bbx_x, bbx_y, bbx_width + 1, bbx_height + 1)
 
     # Returns the block minimum size
     def GetMinSize(self):
@@ -565,12 +542,9 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
         scaling = self.Parent.GetScaling()
         position = self.Size[1] // 2 + 1
         if scaling is not None:
-            position = round((self.Pos.y + position) /
-                             scaling[1]) * scaling[1] - self.Pos.y
-
-        position = int(position)
-        self.Input.SetPosition(wxpatch.Point(0, position))
-        self.Output.SetPosition(wxpatch.Point(self.Size[0], position))
+            position = round((self.Pos.y + position) / scaling[1]) * scaling[1] - self.Pos.y
+        self.Input.SetPosition(wx.Point(0, position))
+        self.Output.SetPosition(wx.Point(self.Size[0], position))
         self.RefreshConnected()
 
     # Changes the contact name
@@ -622,8 +596,8 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
         width = 4 * scalex + 5
         height = (self.Size[1] + 3) * scaley + 5
 
-        wxpatch.DrawRectangle(dc, left_left, top, width, height)
-        wxpatch.DrawRectangle(dc, right_left, top, width, height)
+        dc.DrawRectangle(left_left, top, width, height)
+        dc.DrawRectangle(right_left, top, width, height)
         dc.SetLogicalFunction(wx.COPY)
         dc.SetUserScale(scalex, scaley)
 
@@ -692,9 +666,8 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
                 type_size = self.TypeSize
 
         # Draw two rectangles for representing the contact
-        wxpatch.DrawRectangle(dc, self.Pos.x, self.Pos.y, 2, self.Size[1] + 1)
-        wxpatch.DrawRectangle(dc, 
-            self.Pos.x + self.Size[0] - 1, self.Pos.y, 2, self.Size[1] + 1)
+        dc.DrawRectangle(self.Pos.x, self.Pos.y, 2, self.Size[1] + 1)
+        dc.DrawRectangle(self.Pos.x + self.Size[0] - 1, self.Pos.y, 2, self.Size[1] + 1)
         # Draw contact name
         name_pos = (self.Pos.x + (self.Size[0] - name_size[0]) // 2,
                     self.Pos.y - (name_size[1] + 2))
@@ -711,11 +684,9 @@ class LD_Contact(Graphic_Element, DebugDataConsumer):
         if not getattr(dc, "printing", False):
             for name, highlights in self.Highlights.items():
                 if name == "reference":
-                    DrawHighlightedText(
-                        dc, self.Name, highlights, name_pos[0], name_pos[1])
+                    DrawHighlightedText(dc, self.Name, highlights, name_pos[0], name_pos[1])
                 elif typetext != "":
-                    DrawHighlightedText(
-                        dc, typetext, highlights, type_pos[0], type_pos[1])
+                    DrawHighlightedText(dc, typetext, highlights, type_pos[0], type_pos[1])
 
 
 # -------------------------------------------------------------------------------
@@ -730,17 +701,15 @@ class LD_Coil(Graphic_Element):
 
     # Create a new coil
     def __init__(self, parent, type, name, id=None):
-        super().__init__(parent)
+        Graphic_Element.__init__(self, parent)
         self.Type = type
         self.Name = name
         self.Id = id
         self.Size = wx.Size(LD_ELEMENT_SIZE[0], LD_ELEMENT_SIZE[1])
         self.Highlights = {}
         # Create an input and output connector
-        self.Input = Connector(self, "", "BOOL", wxpatch.Point(
-            0, self.Size[1] // 2 + 1), WEST)
-        self.Output = Connector(self, "", "BOOL", wxpatch.Point(
-            self.Size[0], self.Size[1] // 2 + 1), EAST)
+        self.Input = Connector(self, "", "BOOL", wx.Point(0, self.Size[1] // 2 + 1), WEST)
+        self.Output = Connector(self, "", "BOOL", wx.Point(self.Size[0], self.Size[1] // 2 + 1), EAST)
         self.Value = None
         self.PreviousValue = False
         self.RefreshNameSize()
@@ -787,11 +756,9 @@ class LD_Coil(Graphic_Element):
         rect = rect.Union(self.Output.GetRedrawRect(movex, movey))
         if movex != 0 or movey != 0:
             if self.Input.IsConnected():
-                rect = rect.Union(
-                    self.Input.GetConnectedRedrawRect(movex, movey))
+                rect = rect.Union(self.Input.GetConnectedRedrawRect(movex, movey))
             if self.Output.IsConnected():
-                rect = rect.Union(
-                    self.Output.GetConnectedRedrawRect(movex, movey))
+                rect = rect.Union(self.Output.GetConnectedRedrawRect(movex, movey))
         return rect
 
     def ProcessDragging(self, movex, movey, event, scaling):
@@ -811,10 +778,8 @@ class LD_Coil(Graphic_Element):
 
     # Unconnect input and output
     def Clean(self):
-        self.Input.UnConnect(
-            delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
-        self.Output.UnConnect(
-            delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
+        self.Input.UnConnect(delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
+        self.Output.UnConnect(delete=self.Parent.GetDrawingMode() == FREEDRAWING_MODE)
 
     # Refresh the size of text for name
     def RefreshNameSize(self):
@@ -856,7 +821,7 @@ class LD_Coil(Graphic_Element):
             bbx_width = self.Size[0]
             bbx_y = self.Pos.y
             bbx_height = self.Size[1]
-        self.BoundingBox = wxpatch.Rect(bbx_x, bbx_y, bbx_width + 1, bbx_height + 1)
+        self.BoundingBox = wx.Rect(bbx_x, bbx_y, bbx_width + 1, bbx_height + 1)
 
     # Returns the block minimum size
     def GetMinSize(self):
@@ -897,10 +862,9 @@ class LD_Coil(Graphic_Element):
         scaling = self.Parent.GetScaling()
         position = self.Size[1] // 2 + 1
         if scaling is not None:
-            position = round((self.Pos.y + position) /
-                             scaling[1]) * scaling[1] - self.Pos.y
-        self.Input.SetPosition(wxpatch.Point(0, position))
-        self.Output.SetPosition(wxpatch.Point(self.Size[0], position))
+            position = round((self.Pos.y + position) / scaling[1]) * scaling[1] - self.Pos.y
+        self.Input.SetPosition(wx.Point(0, position))
+        self.Output.SetPosition(wx.Point(self.Size[0], position))
         self.RefreshConnected()
 
     # Changes the coil name
@@ -947,14 +911,12 @@ class LD_Coil(Graphic_Element):
         dc.SetLogicalFunction(wx.AND)
         # Draw a two circle arcs for representing the coil
         dc.DrawEllipticArc(round(self.Pos.x * scalex),
-                           round(
-                               (self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1) * scaley),
+                           round((self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1) * scaley),
                            round(self.Size[0] * scalex),
                            round((int(self.Size[1] * sqrt(2)) - 1) * scaley),
                            135, 225)
         dc.DrawEllipticArc(round(self.Pos.x * scalex),
-                           round(
-                               (self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1) * scaley),
+                           round((self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1) * scaley),
                            round(self.Size[0] * scalex),
                            round((int(self.Size[1] * sqrt(2)) - 1) * scaley),
                            -45, 45)
@@ -1012,13 +974,8 @@ class LD_Coil(Graphic_Element):
         if getattr(dc, "printing", False) and not isinstance(dc, wx.PostScriptDC):
             # Draw an clipped ellipse for representing the coil
             clipping_box = dc.GetClippingBox()
-            dc.SetClippingRegion(self.Pos.x - 1, self.Pos.y,
-                                 self.Size[0] + 2, self.Size[1] + 1)
-            dc.DrawEllipse(self.Pos.x,
-                           self.Pos.y -
-                           int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1,
-                           self.Size[0],
-                           int(self.Size[1] * sqrt(2)) - 1)
+            dc.SetClippingRegion(self.Pos.x - 1, self.Pos.y, self.Size[0] + 2, self.Size[1] + 1)
+            dc.DrawEllipse(self.Pos.x, self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1, self.Size[0], int(self.Size[1] * sqrt(2)) - 1)
             dc.DestroyClippingRegion()
             if clipping_box != (0, 0, 0, 0):
                 dc.SetClippingRegion(*clipping_box)
@@ -1027,18 +984,15 @@ class LD_Coil(Graphic_Element):
                 type_size = dc.GetTextExtent(typetext)
         else:
             # Draw a two ellipse arcs for representing the coil
-            dc.DrawEllipticArc(self.Pos.x, self.Pos.y - int(self.Size[1] * (
-                sqrt(2) - 1.) / 2.) + 1, self.Size[0], int(self.Size[1] * sqrt(2)) - 1, 135, 225)
-            dc.DrawEllipticArc(self.Pos.x, self.Pos.y - int(self.Size[1] * (
-                sqrt(2) - 1.) / 2.) + 1, self.Size[0], int(self.Size[1] * sqrt(2)) - 1, -45, 45)
+            dc.DrawEllipticArc(self.Pos.x, self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1, self.Size[0], int(self.Size[1] * sqrt(2)) - 1, 135, 225)
+            dc.DrawEllipticArc(self.Pos.x, self.Pos.y - int(self.Size[1] * (sqrt(2) - 1.) / 2.) + 1, self.Size[0], int(self.Size[1] * sqrt(2)) - 1, -45, 45)
             # Draw a point to avoid hole in left arc
             if not getattr(dc, "printing", False):
                 if self.Value is not None and self.Value:
                     dc.SetPen(MiterPen(wx.GREEN))
                 else:
                     dc.SetPen(MiterPen(wx.BLACK))
-                dc.DrawPoint(self.Pos.x + 1, self.Pos.y +
-                             self.Size[1] // 2 + 1)
+                dc.DrawPoint(self.Pos.x + 1, self.Pos.y + self.Size[1] // 2 + 1)
             name_size = self.NameSize
             if typetext != "":
                 type_size = self.TypeSize
@@ -1059,8 +1013,6 @@ class LD_Coil(Graphic_Element):
         if not getattr(dc, "printing", False):
             for name, highlights in self.Highlights.items():
                 if name == "reference":
-                    DrawHighlightedText(
-                        dc, self.Name, highlights, name_pos[0], name_pos[1])
+                    DrawHighlightedText(dc, self.Name, highlights, name_pos[0], name_pos[1])
                 elif typetext != "":
-                    DrawHighlightedText(
-                        dc, typetext, highlights, type_pos[0], type_pos[1])
+                    DrawHighlightedText(dc, typetext, highlights, type_pos[0], type_pos[1])

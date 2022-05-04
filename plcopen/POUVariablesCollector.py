@@ -3,7 +3,6 @@
 # This file is part of Beremiz.
 # See COPYING file for copyrights details.
 
-
 from plcopen.XSLTModelQuery import XSLTModelQuery, _StringValue, _BoolValue, _translate_args
 from plcopen.types_enums import CLASS_TYPES, POU_TYPES, VAR_CLASS_INFOS
 
@@ -24,18 +23,18 @@ def class_extraction(value):
     return None
 
 
-class _VariablesTreeItemInfos:
+class _VariablesTreeItemInfos(object):
     __slots__ = ["name", "var_class", "type", "edit", "debug", "variables"]
 
     def __init__(self, *args):
-        for attr, value in zip(self.__slots__, args):
+        for attr, value in list(zip(self.__slots__, args)):
             setattr(self, attr, value if value is not None else "")
 
     def copy(self):
         return _VariablesTreeItemInfos(*[getattr(self, attr) for attr in self.__slots__])
 
 
-class VariablesTreeInfosFactory:
+class VariablesTreeInfosFactory(object):
 
     def __init__(self):
         self.Root = None
@@ -59,10 +58,11 @@ class VariablesTreeInfosFactory:
 
 class POUVariablesCollector(XSLTModelQuery):
     def __init__(self, controller):
-        super().__init__(controller,
-                         "pou_variables.xslt",
-                         [(name, self.FactoryCaller(name))
-                          for name in ["SetRoot", "AddVariable"]])
+        XSLTModelQuery.__init__(self,
+                                controller,
+                                "pou_variables.xslt",
+                                [(name, self.FactoryCaller(name))
+                                 for name in ["SetRoot", "AddVariable"]])
 
     def FactoryCaller(self, funcname):
         def CallFactory(*args):

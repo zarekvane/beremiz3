@@ -24,7 +24,9 @@
 
 
 import wx
+
 from plcopen.structures import TestIdentifier, IEC_KEYWORDS
+
 
 # -------------------------------------------------------------------------------
 #                                POU Name Dialog
@@ -35,12 +37,12 @@ class PouNameDialog(wx.TextEntryDialog):
 
     def __init__(self, parent, message, caption=_("Please enter text"), defaultValue="",
                  style=wx.OK | wx.CANCEL | wx.CENTRE, pos=wx.DefaultPosition):
-        super().__init__(parent, message, caption, defaultValue, style, pos)
+        wx.TextEntryDialog.__init__(self, parent, message, caption, defaultValue, style, pos)
 
         self.PouNames = []
 
-        self.Bind(wx.EVT_BUTTON, self.OnOK,
-                  self.GetSizer().GetItem(2).GetSizer().GetItem(1).GetSizer().GetAffirmativeButton())
+        # self.Bind(wx.EVT_BUTTON, self.OnOK,
+        #           self.GetSizer().GetItem(2).GetSizer().GetItem(1).GetSizer().GetAffirmativeButton())
 
     def OnOK(self, event):
         message = None
@@ -54,8 +56,7 @@ class PouNameDialog(wx.TextEntryDialog):
         elif step_name.upper() in self.PouNames:
             message = _("A POU named \"%s\" already exists!") % step_name
         if message is not None:
-            dialog = wx.MessageDialog(
-                self, message, _("Error"), wx.OK | wx.ICON_ERROR)
+            dialog = wx.MessageDialog(self, message, _("Error"), wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()
             dialog.Destroy()
         else:

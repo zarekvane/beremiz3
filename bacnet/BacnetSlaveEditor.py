@@ -27,13 +27,12 @@ from collections import Counter
 
 import wx
 
-# Import some libraries on Beremiz code
-from util.BitmapLibrary import GetBitmap
 from controls.CustomGrid import CustomGrid
 from controls.CustomTable import CustomTable
 from editors.ConfTreeNodeEditor import ConfTreeNodeEditor
 from graphics.GraphicCommons import ERROR_HIGHLIGHT
-
+# Import some libraries on Beremiz code
+from util.BitmapLibrary import GetBitmap
 
 # BACnet Engineering units taken from: ASHRAE 135-2016, clause/chapter 21
 BACnetEngineeringUnits = [
@@ -312,7 +311,7 @@ BACnetObjectID_NUL = 4194303
 
 # A base class
 # what would be a purely virtual class in C++
-class ObjectProperties:
+class ObjectProperties(object):
     # this __init_() function is currently not beeing used!
 
     def __init__(self):
@@ -515,7 +514,7 @@ class MSIObject(MultiSObject):
 
 
 class ObjectTable(CustomTable):
-    #  A custom wx.grid.PyGridTableBase using user supplied data
+    #  A custom wx.grid.GridTableBase using user supplied data
     #
     #  This will basically store a list of BACnet objects that the slave will support/implement.
     #  There will be one instance of this ObjectTable class for each BACnet object type
@@ -575,10 +574,8 @@ class ObjectTable(CustomTable):
                 PropertyName = self.BACnetObjectType.PropertyNames[col]
                 PropertyConfig = self.BACnetObjectType.PropertyConfig[PropertyName]
                 grid.SetReadOnly(row, col, False)
-                grid.SetCellEditor(
-                    row, col, PropertyConfig["GridCellEditor"]())
-                grid.SetCellRenderer(
-                    row, col, PropertyConfig["GridCellRenderer"]())
+                grid.SetCellEditor(row, col, PropertyConfig["GridCellEditor"]())
+                grid.SetCellRenderer(row, col, PropertyConfig["GridCellRenderer"]())
                 grid.SetCellBackgroundColour(row, col, wx.WHITE)
                 grid.SetCellTextColour(row, col, wx.BLACK)
                 if "GridCellEditorParam" in PropertyConfig:
@@ -660,20 +657,18 @@ class ObjectGrid(CustomGrid):
     #
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        CustomGrid.__init__(self, *args, **kwargs)
 
     # Called when a new row is added by clicking Add button
     # call graph: CustomGrid.OnAddButton() --> CustomGrid.AddRow() -->
     # ObjectGrid._AddRow()
     def _AddRow(self, new_row):
         if new_row > 0:
-            self.Table.InsertRow(
-                new_row, self.Table.GetRow(new_row - 1).copy())
+            self.Table.InsertRow(new_row, self.Table.GetRow(new_row - 1).copy())
         else:
             self.Table.InsertRow(new_row, self.DefaultValue.copy())
         # start off with invalid object ID
-        self.Table.SetValueByName(
-            new_row, "Object Identifier", BACnetObjectID_NUL)
+        self.Table.SetValueByName(new_row, "Object Identifier", BACnetObjectID_NUL)
         # Find an apropriate BACnet object ID for the new object.
         # We choose a first attempt (based on object ID of previous line + 1)
         new_object_id = 0
@@ -717,8 +712,8 @@ class ObjectGrid(CustomGrid):
                 # More than 1 BACnet object using this ID! Let us Highlight this row with errors...
                 # TODO: change the hardcoded column number '0' to a number obtained at runtime
                 #       that is guaranteed to match the column titled "Object Identifier"
-                self.SetCellBackgroundColour(row, 0, ERROR_HIGHLIGHT[0])
-                self.SetCellTextColour(row, 0, ERROR_HIGHLIGHT[1])
+                self.SetCellBackgroundColour(row, 0, wx.Colour(255, 255, 0))
+                self.SetCellTextColour(row, 0, wx.RED)
             else:
                 self.SetCellBackgroundColour(row, 0, wx.WHITE)
                 self.SetCellTextColour(row, 0, wx.BLACK)
@@ -791,7 +786,7 @@ class ObjectEditor(wx.Panel):
         self.controller = controller
         self.ObjTable = ObjTable
 
-        super().__init__(parent)
+        wx.Panel.__init__(self, parent)
 
         # The main sizer, 2 rows: top row for buttons, bottom row for 2D grid
         self.MainSizer = wx.FlexGridSizer(cols=1, hgap=10, rows=2, vgap=0)
@@ -815,11 +810,10 @@ class ObjectEditor(wx.Panel):
                 ("DeleteButton", "remove_element", _("Remove variable")),
                 ("UpButton", "up", _("Move variable up")),
                 ("DownButton", "down", _("Move variable down"))]:
-
-            button = wx.BitmapButton(parent=self,
-                                     bitmap=GetBitmap(bitmap),
-                                     size=wx.Size(28, 28),
-                                     style=wx.NO_BORDER)
+            button = wx.lib.buttons.GenBitmapButton(
+                self, bitmap=GetBitmap(bitmap),
+                size=wx.Size(28, 28),
+                style=wx.NO_BORDER)
             button.SetToolTip(help)
             setattr(self, name, button)
             controls_sizer.Add(button)
@@ -991,7 +985,7 @@ class BacnetSlaveEditorPlug(ConfTreeNodeEditor):
 
     def __init__(self, parent, controler, window, editable=True):
         self.Editable = editable
-        super().__init__(parent, controler, window)
+        ConfTreeNodeEditor.__init__(self, parent, controler, window)
 
     def __del__(self):
         self.Controler.OnCloseEditor(self)
@@ -1004,7 +998,7 @@ class BacnetSlaveEditorPlug(ConfTreeNodeEditor):
 
     def RefreshView(self):
         self.HighlightAllDuplicateObjectNames()
-        super().RefreshView()
+        ConfTreeNodeEditor.RefreshView(self)
         self. AV_ObjectEditor.RefreshView()
         self. AO_ObjectEditor.RefreshView()
         self. AI_ObjectEditor.RefreshView()

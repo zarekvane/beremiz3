@@ -55,7 +55,6 @@ Latest Revision before Latest Revision before Latest Revision: 31 May 2005, 23.1
 
 """
 
-
 import wx
 
 # Horizontal Alignment Constants
@@ -77,16 +76,23 @@ ESB_EXACT_FIT = 20
 # ---------------------------------------------------------------
 # This Is The Main Class Implementation. See The Demo For Details
 # ---------------------------------------------------------------
-class EnhancedStatusBarItem:
+class EnhancedStatusBarItem(object):
     def __init__(self, widget, pos, horizontalalignment=ESB_ALIGN_CENTER_HORIZONTAL, verticalalignment=ESB_ALIGN_CENTER_VERTICAL):
         self.__dict__.update(locals())
 
 
 class EnhancedStatusBar(wx.StatusBar):
 
-    def __init__(self, parent, id=wx.ID_ANY, style=wx.STB_SIZEGRIP,
+    def __init__(self, parent, id=wx.ID_ANY, style=0,
                  name="EnhancedStatusBar"):
-        super().__init__(parent, id, style, name)
+        """Default Class Constructor.
+
+        EnhancedStatusBar.__init__(self, parent, id=wx.ID_ANY,
+                                   style=wx.ST_SIZEGRIP,
+                                   name="EnhancedStatusBar")
+        """
+
+        wx.StatusBar.__init__(self, parent, id, style, name)
 
         self._items = {}
         self._curPos = 0
@@ -95,7 +101,7 @@ class EnhancedStatusBar(wx.StatusBar):
         self.Bind(wx.EVT_SIZE, self.OnSize)
         wx.CallAfter(self.OnSize, None)
 
-    def OnSize(self, event: wx.SizeEvent):
+    def OnSize(self, event):
         """Handles The wx.EVT_SIZE Events For The StatusBar.
 
         Actually, All The Calculations Linked To HorizontalAlignment And

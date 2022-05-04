@@ -22,7 +22,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import os
 import re
 import traceback
@@ -30,13 +29,12 @@ from builtins import str as text
 from copy import deepcopy
 
 from lxml import etree
-from xmlclass import GenerateParserFromXSDstring
 
-from PLCControler import UndoBuffer
 from ConfigTreeNode import XSDSchemaErrorMessage
-
-from plcopen.plcopen import TestTextElement
+from PLCControler import UndoBuffer
 from editors.CodeFileEditor import GetSectionsText
+from plcopen.plcopen import TestTextElement
+from xmlclass import GenerateParserFromXSDstring
 
 CODEFILE_XSD = """<?xml version="1.0" encoding="ISO-8859-1" ?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -87,7 +85,7 @@ CODEFILE_XSD = """<?xml version="1.0" encoding="ISO-8859-1" ?>
 SECTION_TAG_ELEMENT = "<xsd:element name=\"%s\" type=\"CodeText\"/>"
 
 
-class CodeFile:
+class CodeFile(object):
 
     CODEFILE_NAME = "CodeFile"
     SECTIONS_NAMES = []
@@ -189,7 +187,7 @@ class CodeFile:
     def OnCTNSave(self, from_project_path=None):
         filepath = self.CodeFileName()
 
-        xmlfile = open(filepath, "w")
+        xmlfile = open(filepath, "w", encoding='utf-8')
         xmlfile.write(etree.tostring(
             self.CodeFile,
             pretty_print=True,

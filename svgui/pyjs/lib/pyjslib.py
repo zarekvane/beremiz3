@@ -234,7 +234,6 @@ def preload_app_modules(path, app_modnames, app_imported_fn, dynamic,
 
 # as comment on line 20 says
 # import sys should be below
-import sys  # noqa # pylint: disable=wrong-import-order,unused-import,wrong-import-position
 
 
 class BaseException:
@@ -449,8 +448,13 @@ def cmp(a, b):
         return a.__cmp__(b)
     elif hasattr(b, "__cmp__"):
         return -b.__cmp__(a)
+    if a > b:
+        return 1
+    elif b > a:
+        return -1
+    else:
+        return 0
 
-    return (a > b) - (a < b)
 
 def bool(v):
     # this needs to stay in native code without any dependencies here,
@@ -543,7 +547,7 @@ class List:
         if ll != 0:
             return ll
         for x in range(len(l)):
-            ll = cmp(self.__getitem__(x), l[x])
+            ll = operator.eq(self.__getitem__(x), l[x])
             if ll != 0:
                 return ll
         return 0
@@ -878,15 +882,15 @@ class Dict:
         """)
 
     def __iter__(self):
-        return self.keys().__iter__()
+        return list(self.keys()).__iter__()
 
     def iterkeys(self):
         return self.__iter__()
 
-    def itervalues(self):
+    def values(self):
         return self.values().__iter__()
 
-    def iteritems(self):
+    def items(self):
         return self.items().__iter__()
 
     def setdefault(self, key, default_value):
@@ -1129,7 +1133,7 @@ def int(text, radix=0):
     """)
 
 
-def len:
+def len(object):
     JS("""
     if (object==null) return 0;
     if (pyjslib.isObject(object) && object.__len__) return object.__len__();
@@ -1403,7 +1407,7 @@ def type(clsname, bases=None, methods=None):
 
     JS(" var mths = {}; ")
     if methods:
-        for k in methods.keys():
+        for k in list(methods.keys()):
             _mth = methods[k]
             JS(" mths[k] = _mth; ")
 

@@ -3,9 +3,9 @@
 
 # See COPYING file for copyrights details.
 
-
 import wx
 import wx.dataview as dv
+
 import PSKManagement as PSK
 from PSKManagement import *
 from dialogs.IDMergeDialog import IDMergeDialog
@@ -16,7 +16,7 @@ class IDBrowserModel(dv.DataViewIndexListModel):
         self.project_path = project_path
         self.columncount = columncount
         self.data = PSK.GetData(project_path)
-        super().__init__(len(self.data))
+        dv.DataViewIndexListModel.__init__(self, len(self.data))
 
     def _saveData(self):
         PSK.SaveData(self.project_path, self.data)
@@ -42,15 +42,10 @@ class IDBrowserModel(dv.DataViewIndexListModel):
             item2, item1 = item1, item2
         row1 = self.GetRow(item1)
         row2 = self.GetRow(item2)
-
-        x = self.data[row1][col]
-        y = self.data[row2][col]
-        
         if col == 0:
-            x = int(x)
-            y = int(y)
-
-        return (x > y) - (x < y)
+            return operator.eq(int(self.data[row1][col]), int(self.data[row2][col]))
+        else:
+            return operator.eq(self.data[row1][col], self.data[row2][col])
 
     def DeleteRows(self, rows):
         rows = list(rows)
@@ -83,7 +78,7 @@ colflags = dv.DATAVIEW_COL_RESIZABLE | dv.DATAVIEW_COL_SORTABLE
 class IDBrowser(wx.Panel):
     def __init__(self, parent, ctr, SelectURICallBack=None, SelectIDCallBack=None, **kwargs):
         big = self.isManager = SelectURICallBack is None and SelectIDCallBack is None
-        super().__init__(parent, -1, size=(800 if big else 450,
+        wx.Panel.__init__(self, parent, -1, size=(800 if big else 450,
                                                   600 if big else 200))
 
         self.SelectURICallBack = SelectURICallBack

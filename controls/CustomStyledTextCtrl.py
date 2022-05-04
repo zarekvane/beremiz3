@@ -23,11 +23,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
 from functools import reduce
+
 import wx
 import wx.stc
-
 
 if wx.Platform == '__WXMSW__':
     faces = {
@@ -92,7 +91,7 @@ def GetCursorPos(old, new):
 class CustomStyledTextCtrl(wx.stc.StyledTextCtrl):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        wx.stc.StyledTextCtrl.__init__(self, *args, **kwargs)
 
         self.Bind(wx.EVT_MOTION, self.OnMotion)
 
@@ -105,9 +104,9 @@ class CustomStyledTextCtrl(wx.stc.StyledTextCtrl):
                     [self.GetMarginWidth(i) for i in range(3)],
                     0)
                 if x <= margin_width:
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
+                    self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
                 else:
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_IBEAM))
+                    self.SetCursor(wx.Cursor(wx.CURSOR_IBEAM))
             else:
                 event.Skip()
         else:
@@ -115,4 +114,8 @@ class CustomStyledTextCtrl(wx.stc.StyledTextCtrl):
 
     def AppendText(self, text):
         self.GotoPos(self.GetLength())
-        self.AddText(text)
+        try:
+            self.AddText(text)
+        except Exception as e:
+            print(text)
+            print(e)

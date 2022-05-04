@@ -1,5 +1,3 @@
-
-
 from etherlab.etherlab import *
 from util.BitmapLibrary import AddBitmapFolder
 import util.paths as paths

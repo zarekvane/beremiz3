@@ -1,16 +1,16 @@
-
-
 import wx
+
 from controls.IDBrowser import IDBrowser
 
 
 class IDManager(wx.Dialog):
     def __init__(self, parent, ctr):
         self.ctr = ctr
-        super().__init__(name='IDManager', parent=parent,
-                         title=_('URI Editor'),
-                         style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
-                         size=(800, 600))
+        wx.Dialog.__init__(self,
+                           name='IDManager', parent=parent,
+                           title=_('URI Editor'),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+                           size=(800, 600))
         # start IDBrowser in manager mode
         self.browser = IDBrowser(self, ctr)
         self.Bind(wx.EVT_CHAR_HOOK, self.OnEscapeKey)

@@ -23,11 +23,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import wx
 
-from graphics.SFC_Objects import SFC_Transition
 from dialogs.BlockPreviewDialog import BlockPreviewDialog
+from graphics.SFC_Objects import SFC_Transition
+
 
 # -------------------------------------------------------------------------------
 #                        Set Transition Parameters Dialog
@@ -49,8 +49,8 @@ class SFCTransitionDialog(BlockPreviewDialog):
         @param connection: True if transition value can be defined by a
         connection (default: True)
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Edit transition'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Edit transition'))
 
         # Init common sizers
         self._init_sizers(2, 0, 8, None, 2, 1)
@@ -229,7 +229,7 @@ class SFCTransitionDialog(BlockPreviewDialog):
         self.RefreshPreview()
         event.Skip()
 
-    def RefreshPreview(self):
+    def DrawPreview(self):
         """
         Refresh preview panel of graphic element
         Override BlockPreviewDialog function
@@ -240,4 +240,4 @@ class SFCTransitionDialog(BlockPreviewDialog):
         self.Element.SetPriority(self.Priority.GetValue())
 
         # Call BlockPreviewDialog function
-        BlockPreviewDialog.RefreshPreview(self)
+        BlockPreviewDialog.DrawPreview(self)

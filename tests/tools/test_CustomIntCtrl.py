@@ -23,13 +23,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
-
-import unittest
 import time
+# 
+# 
+import unittest
 
-import wx
 import conftest
+import wx
+
 import controls.CustomIntCtrl
 
 

@@ -2,14 +2,14 @@
 #   original code: http://trac.pyworks.org/pyjamas/wiki/DjangoWithPyJamas
 #   also from: http://www.pimentech.fr/technologies/outils
 
-
 import datetime
 from builtins import str as text
 
 from django.core.serializers import serialize
 
-
 from svgui.pyjs.jsonrpc.jsonrpc import JSONRPCServiceBase
+
+
 # JSONRPCService and jsonremote are used in combination to drastically
 # simplify the provision of JSONRPC services.  use as follows:
 #
@@ -71,7 +71,7 @@ def jsonremote(service):
 
 def builderrors(form):
     d = {}
-    for error in form.errors.keys():
+    for error in list(form.errors.keys()):
         if error not in d:
             d[error] = []
         for errorval in form.errors[error]:
@@ -105,14 +105,14 @@ def describe_field_errors(field):
         msgs[n] = text(m)
     res['error_messages'] = msgs
     if field_type in ['ComboField', 'MultiValueField', 'SplitDateTimeField']:
-        res['fields'] = map(describe_field, field.fields)
+        res['fields'] = list(map(describe_field, field.fields))
     return res
 
 
 def describe_fields_errors(fields, field_names):
     res = {}
     if not field_names:
-        field_names = fields.keys()
+        field_names = list(fields.keys())
     for name in field_names:
         field = fields[name]
         res[name] = describe_field_errors(field)
@@ -126,14 +126,14 @@ def describe_field(field):
                   ['help_text', 'label', 'initial', 'required']):
         res[fname] = getattr(field, fname)
     if field_type in ['ComboField', 'MultiValueField', 'SplitDateTimeField']:
-        res['fields'] = map(describe_field, field.fields)
+        res['fields'] = list(map(describe_field, field.fields))
     return res
 
 
 def describe_fields(fields, field_names):
     res = {}
     if not field_names:
-        field_names = fields.keys()
+        field_names = list(fields.keys())
     for name in field_names:
         field = fields[name]
         res[name] = describe_field(field)
@@ -144,12 +144,12 @@ class FormProcessor(JSONRPCService):
     def __init__(self, forms, _formcls=None):
 
         if _formcls is None:
-            super().__init__()
-            for k in forms.keys():
+            JSONRPCService.__init__(self)
+            for k in list(forms.keys()):
                 s = FormProcessor({}, forms[k])
                 self.add_method(k, s.__process)
         else:
-            super().__init__(forms)
+            JSONRPCService.__init__(self, forms)
             self.formcls = _formcls
 
     def __process(self, request, params, command=None):

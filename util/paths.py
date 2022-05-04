@@ -23,13 +23,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 
+
 import os
-import sys
 
 
 def AbsFile(file):
-    if not isinstance(file, str):
-        file = str(file, sys.getfilesystemencoding())
+    # if isinstance(file, str):
+    #     file = text(file, sys.getfilesystemencoding())
     return file
 
 
@@ -44,6 +44,6 @@ def AbsNeighbourFile(file, *args):
 
 def AbsParentDir(file, level=1):
     path = AbsDir(file)
-    for _ in range(0, level):
+    for dummy in range(0, level):
         path = os.path.dirname(path)
     return path

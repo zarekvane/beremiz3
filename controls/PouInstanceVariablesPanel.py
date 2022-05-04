@@ -27,12 +27,10 @@ from collections import namedtuple
 
 import wx
 import wx.lib.agw.customtreectrl as CT
-import wxpatch
+import wx.lib.buttons
 
 from plcopen.types_enums import *
-
 from util.BitmapLibrary import GetBitmap
-
 
 # Customize CustomTreeItem for adding icon on item right
 CT.GenericTreeItem._rightimages = []
@@ -61,8 +59,7 @@ class CustomTreeCtrlWithRightImage(CT.CustomTreeCtrl):
         height = CT.CustomTreeCtrl.GetLineHeight(self, item)
         rightimages = item.GetRightImages()
         if len(rightimages) > 0:
-            _r_image_w, r_image_h = self._imageListRight.GetSize(
-                rightimages[0])
+            _r_image_w, r_image_h = self._imageListRight.GetSize(rightimages[0])
             return max(height, r_image_h + 8)
         return height
 
@@ -76,10 +73,9 @@ class CustomTreeCtrlWithRightImage(CT.CustomTreeCtrl):
             bbox_width = (r_image_w + 4) * len(rightimages) + 4
             bbox_height = r_image_h + 8
             bbox_x = w - bbox_width
-            bbox_y = item.GetY() + ((total_h > r_image_h)
-                                    and [(total_h-r_image_h)//2] or [0])[0]
+            bbox_y = item.GetY() + ((total_h > r_image_h) and [(total_h-r_image_h)//2] or [0])[0]
 
-            return wxpatch.Rect(bbox_x, bbox_y, bbox_width, bbox_height)
+            return wx.Rect(bbox_x, bbox_y, bbox_width, bbox_height)
 
         return None
 
@@ -90,10 +86,10 @@ class CustomTreeCtrlWithRightImage(CT.CustomTreeCtrl):
             r_image_w, r_image_h = self._imageListRight.GetSize(rightimages[0])
             images_bbx = self.GetItemRightImagesBBox(item)
 
-            rect = wxpatch.Rect(images_bbx.x + 4, images_bbx.y + 4,
+            rect = wx.Rect(images_bbx.x + 4, images_bbx.y + 4,
                            r_image_w, r_image_h)
             for r_image in rightimages:
-                if rect.Inside(point):
+                if rect.Contains(point):
                     return r_image
                 rect.x += r_image_w + 4
 
@@ -105,13 +101,12 @@ class CustomTreeCtrlWithRightImage(CT.CustomTreeCtrl):
         rightimages = item.GetRightImages()
         if len(rightimages) > 0:
             images_bbx = self.GetItemRightImagesBBox(item)
-            r_image_w, _r_image_h = self._imageListRight.GetSize(
-                rightimages[0])
+            r_image_w, _r_image_h = self._imageListRight.GetSize(rightimages[0])
 
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
             dc.SetPen(wx.TRANSPARENT_PEN)
 
-            wxpatch.DrawRectangle(dc, images_bbx.x, images_bbx.y,
+            dc.DrawRectangle(images_bbx.x, images_bbx.y,
                              images_bbx.width, images_bbx.height)
             x_pos = images_bbx.x + 4
             for r_image in rightimages:
@@ -127,28 +122,22 @@ _ButtonCallbacks = namedtuple("ButtonCallbacks", ["leftdown", "dclick"])
 class PouInstanceVariablesPanel(wx.Panel):
 
     def __init__(self, parent, window, controller, debug):
-        super().__init__(name='PouInstanceTreePanel',
-                         parent=parent, pos=wxpatch.Point(0, 0),
-                         size=wx.Size(0, 0), style=wx.TAB_TRAVERSAL)
+        wx.Panel.__init__(self, name='PouInstanceTreePanel',
+                          parent=parent, pos=wx.Point(0, 0),
+                          size=wx.Size(0, 0), style=wx.TAB_TRAVERSAL)
 
-        self.ParentButton = wx.BitmapButton(parent=self,
-                                            bitmap=GetBitmap("top"),
-                                            size=wx.Size(28, 28),
-                                            style=wx.NO_BORDER)
+        self.ParentButton = wx.lib.buttons.GenBitmapButton(
+            self, bitmap=GetBitmap("top"), size=wx.Size(28, 28), style=wx.NO_BORDER)
         self.ParentButton.SetToolTip(_("Parent instance"))
         self.Bind(wx.EVT_BUTTON, self.OnParentButtonClick,
                   self.ParentButton)
 
-        self.InstanceChoice = wx.ComboBox(
-            self, size=wx.Size(0, 0), style=wx.CB_READONLY)
+        self.InstanceChoice = wx.ComboBox(self, size=wx.Size(0, 0), style=wx.CB_READONLY)
         self.Bind(wx.EVT_COMBOBOX, self.OnInstanceChoiceChanged,
                   self.InstanceChoice)
 
-        self.DebugButton = wx.BitmapButton(parent=self,
-                                           bitmap=GetBitmap("debug_instance"),
-                                           size=wx.Size(28, 28),
-                                           style=wx.NO_BORDER)
-
+        self.DebugButton = wx.lib.buttons.GenBitmapButton(
+            self, bitmap=GetBitmap("debug_instance"), size=wx.Size(28, 28), style=wx.NO_BORDER)
         self.DebugButton.SetToolTip(_("Debug instance"))
         self.Bind(wx.EVT_BUTTON, self.OnDebugButtonClick,
                   self.DebugButton)
@@ -172,8 +161,7 @@ class PouInstanceVariablesPanel(wx.Panel):
 
         self.TreeRightImageList = wx.ImageList(24, 24)
         self.EditImage = self.TreeRightImageList.Add(GetBitmap("edit"))
-        self.DebugInstanceImage = self.TreeRightImageList.Add(
-            GetBitmap("debug_instance"))
+        self.DebugInstanceImage = self.TreeRightImageList.Add(GetBitmap("debug_instance"))
         self.VariablesList.SetRightImageList(self.TreeRightImageList)
 
         self.ButtonCallBacks = {
@@ -250,11 +238,9 @@ class PouInstanceVariablesPanel(wx.Panel):
 
         if self.Controller is not None and self.PouTagName is not None:
             if self.PouTagName.split('::')[0] in ['A', 'T']:
-                self.PouInfos = self.Controller.GetPouVariables(
-                    'P::%s' % self.PouTagName.split('::')[1], self.Debug)
+                self.PouInfos = self.Controller.GetPouVariables('P::%s' % self.PouTagName.split('::')[1], self.Debug)
             else:
-                self.PouInfos = self.Controller.GetPouVariables(
-                    self.PouTagName, self.Debug)
+                self.PouInfos = self.Controller.GetPouVariables(self.PouTagName, self.Debug)
             if None in self.Controller.GetEditedElementType(self.PouTagName, self.Debug) and self.PouInfos is not None:
                 self.PouInfos.debug = False
         else:
@@ -276,9 +262,8 @@ class PouInstanceVariablesPanel(wx.Panel):
 
                 item = self.VariablesList.AppendItem(root, text)
                 item.SetRightImages(right_images)
-                self.VariablesList.SetItemImage(
-                    item, self.ParentWindow.GetTreeImage(var_infos.var_class))
-                self.VariablesList.SetPyData(item, var_infos)
+                self.VariablesList.SetItemImage(item, self.ParentWindow.GetTreeImage(var_infos.var_class))
+                self.VariablesList.SetItemData(item, var_infos)
 
         self.RefreshInstanceChoice()
         self.RefreshButtons()
@@ -289,8 +274,7 @@ class PouInstanceVariablesPanel(wx.Panel):
         self.InstanceChoice.Clear()
         self.InstanceChoice.SetValue("")
         if self.Controller is not None and self.PouInfos is not None:
-            instances = self.Controller.SearchPouInstances(
-                self.PouTagName, self.Debug)
+            instances = self.Controller.SearchPouInstances(self.PouTagName, self.Debug)
             for instance in instances:
                 self.InstanceChoice.Append(instance)
             if len(instances) == 1:
@@ -306,8 +290,7 @@ class PouInstanceVariablesPanel(wx.Panel):
 
     def RefreshButtons(self):
         enabled = self.InstanceChoice.GetSelection() != -1
-        self.ParentButton.Enable(
-            enabled and self.PouInfos.var_class != ITEM_CONFIGURATION)
+        self.ParentButton.Enable(enabled and self.PouInfos.var_class != ITEM_CONFIGURATION)
         self.DebugButton.Enable(enabled and self.PouInfos.debug and self.Debug)
 
         root = self.VariablesList.GetRootItem()
@@ -319,8 +302,7 @@ class PouInstanceVariablesPanel(wx.Panel):
                     for child in panel.GetChildren():
                         if child.GetName() != "edit":
                             child.Enable(enabled)
-                item, item_cookie = self.VariablesList.GetNextChild(
-                    root, item_cookie)
+                item, item_cookie = self.VariablesList.GetNextChild(root, item_cookie)
 
     def EditButtonCallback(self, infos):
         var_class = infos.var_class
@@ -350,8 +332,7 @@ class PouInstanceVariablesPanel(wx.Panel):
                 instance_path = instance_path[0:pos]
             var_path = "%s.%s" % (instance_path, infos.name)
             if var_class in ITEMS_VARIABLE:
-                self.ParentWindow.AddDebugVariable(
-                    var_path.upper(), force=True)
+                self.ParentWindow.AddDebugVariable(var_path, force=True)
             elif var_class == ITEM_TRANSITION:
                 self.ParentWindow.OpenDebugViewer(
                     var_class,
@@ -376,8 +357,8 @@ class PouInstanceVariablesPanel(wx.Panel):
         if self.InstanceChoice.GetSelection() != -1:
             if infos.var_class in ITEMS_VARIABLE:
                 self.ParentWindow.AddDebugVariable(
-                    "%s.%s" % (self.InstanceChoice.GetStringSelection().upper(),
-                               infos.name.upper()),
+                    "%s.%s" % (self.InstanceChoice.GetStringSelection(),
+                               infos.name),
                     force=True,
                     graph=True)
 
@@ -394,10 +375,8 @@ class PouInstanceVariablesPanel(wx.Panel):
 
     def OnParentButtonClick(self, event):
         if self.InstanceChoice.GetSelection() != -1:
-            parent_path = self.InstanceChoice.GetStringSelection().rsplit(".", 1)[
-                0]
-            tagname = self.Controller.GetPouInstanceTagName(
-                parent_path, self.Debug)
+            parent_path = self.InstanceChoice.GetStringSelection().rsplit(".", 1)[0]
+            tagname = self.Controller.GetPouInstanceTagName(parent_path, self.Debug)
             if tagname is not None:
                 wx.CallAfter(self.SetPouType, tagname, parent_path)
                 wx.CallAfter(self.ParentWindow.SelectProjectTreeItem, tagname)
@@ -418,7 +397,7 @@ class PouInstanceVariablesPanel(wx.Panel):
     def OnVariablesListItemActivated(self, event):
         selected_item = event.GetItem()
         if selected_item is not None and selected_item.IsOk():
-            item_infos = self.VariablesList.GetPyData(selected_item)
+            item_infos = self.VariablesList.GetItemData(selected_item)
             if item_infos is not None:
 
                 item_button = self.VariablesList.IsOverItemRightImage(
@@ -438,20 +417,16 @@ class PouInstanceVariablesPanel(wx.Panel):
                         else:
                             tagname = None
                     else:
-                        parent_infos = self.VariablesList.GetPyData(
-                            selected_item.GetParent())
+                        parent_infos = self.VariablesList.GetItemData(selected_item.GetParent())
                         if item_infos.var_class == ITEM_ACTION:
-                            tagname = ComputePouActionName(
-                                parent_infos.type, item_infos.name)
+                            tagname = ComputePouActionName(parent_infos.type, item_infos.name)
                         elif item_infos.var_class == ITEM_TRANSITION:
-                            tagname = ComputePouTransitionName(
-                                parent_infos.type, item_infos.name)
+                            tagname = ComputePouTransitionName(parent_infos.type, item_infos.name)
                         else:
                             tagname = ComputePouName(item_infos.type)
                     if tagname is not None:
                         if instance_path != "":
-                            item_path = "%s.%s" % (
-                                instance_path, item_infos.name)
+                            item_path = "%s.%s" % (instance_path, item_infos.name)
                         else:
                             item_path = None
                         self.SetPouType(tagname, item_path)
@@ -465,7 +440,7 @@ class PouInstanceVariablesPanel(wx.Panel):
             instance_path = self.InstanceChoice.GetStringSelection()
             item, flags = self.VariablesList.HitTest(event.GetPosition())
             if item is not None:
-                item_infos = self.VariablesList.GetPyData(item)
+                item_infos = self.VariablesList.GetItemData(item)
                 if item_infos is not None:
 
                     item_button = self.VariablesList.IsOverItemRightImage(

@@ -10,21 +10,19 @@
 # See COPYING file for copyrights details.
 
 
+import csv
 import os
 import shutil
-import csv
 from builtins import str as text
 
-from lxml import etree
 import wx
-
-from xmlclass import *
+from lxml import etree
 
 from ConfigTreeNode import XSDSchemaErrorMessage
-
-from etherlab.EthercatSlave import ExtractHexDecValue, ExtractName
-from etherlab.EthercatMaster import _EthercatCTN
 from etherlab.ConfigEditor import LibraryEditor, ETHERCAT_VENDOR, ETHERCAT_GROUP, ETHERCAT_DEVICE
+from etherlab.EthercatMaster import _EthercatCTN
+from etherlab.EthercatSlave import ExtractHexDecValue, ExtractName
+from xmlclass import *
 
 ScriptDirectory = os.path.split(os.path.realpath(__file__))[0]
 
@@ -60,17 +58,17 @@ ENTRY_INFOS_KEYS = [
     ("PDO type", str, "")]
 
 
-class EntryListFactory:
+class EntryListFactory(object):
 
     def __init__(self, entries):
         self.Entries = entries
 
     def AddEntry(self, context, *args):
-        index, subindex = map(lambda x: int(x[0]), args[:2])
+        index, subindex = list(map(lambda x: int(x[0]), args[:2]))
         new_entry_infos = {
             key: translate(arg[0]) if len(arg) > 0 else default
             for (key, translate, default), arg
-            in zip(ENTRY_INFOS_KEYS, args)}
+            in list(zip(ENTRY_INFOS_KEYS, args))}
 
         if (index, subindex) != (0, 0):
             entry_infos = self.Entries.get((index, subindex))
@@ -112,11 +110,11 @@ if cls:
                 ("entries_list_ns", "AddEntry"): factory.AddEntry,
                 ("entries_list_ns", "HexDecValue"): HexDecValue,
                 ("entries_list_ns", "EntryName"): EntryName})
-        entries_list_xslt_tree(self, **dict(zip(
+        entries_list_xslt_tree(self, **dict(list(zip(
             ["min_index", "max_index"],
-            map(lambda x: etree.XSLT.strparam(str(x)),
-                limits if limits is not None else [0x0000, 0xFFFF])
-            )))
+            list(map(lambda x: etree.XSLT.strparam(str(x)),
+                     limits if limits is not None else [0x0000, 0xFFFF])
+                 )))))
 
         return entries
     setattr(cls, "GetEntriesList", GetEntriesList)
@@ -139,13 +137,11 @@ if cls:
 
 
 def GroupItemCompare(x, y):
-    cmp = lambda a, b: (a > b) - (a < b)
-
     if x["type"] == y["type"]:
         if x["type"] == ETHERCAT_GROUP:
-            return cmp(x["order"], y["order"])
+            return operator.eq(x["order"], y["order"])
         else:
-            return cmp(x["name"], y["name"])
+            return operator.eq(x["name"], y["name"])
     elif x["type"] == ETHERCAT_GROUP:
         return -1
     return 1
@@ -158,7 +154,7 @@ def SortGroupItems(group):
     group["children"].sort(GroupItemCompare)
 
 
-class ModulesLibrary:
+class ModulesLibrary(object):
 
     MODULES_EXTRA_PARAMS = [
         (
@@ -298,7 +294,7 @@ for mapping needed location variables
                         group_infos["children"].append(device_infos)
                         device_type_occurrences = device_dict.setdefault(device_type, [])
                         device_type_occurrences.append(device_infos)
-                for device_type_occurrences in device_dict.values():
+                for device_type_occurrences in list(device_dict.values()):
                     if len(device_type_occurrences) > 1:
                         for occurrence in device_type_occurrences:
                             occurrence["name"] += _(" (rev. %s)") % occurrence["infos"]["revision_number"]
@@ -313,7 +309,7 @@ for mapping needed location variables
                                 "type": ETHERCAT_VENDOR,
                                 "infos": None,
                                 "children": groups})
-        library.sort(key=lambda x: x["name"])
+        library.sort(lambda x, y: operator.eq(x["name"], y["name"]))
         return library
 
     def GetVendors(self):
@@ -357,8 +353,8 @@ for mapping needed location variables
                     has_header = False
                 else:
                     params_values = {}
-                    for (param, _param_infos), value in zip(
-                            self.MODULES_EXTRA_PARAMS, row[3:]):
+                    for (param, _param_infos), value in list(zip(
+                            self.MODULES_EXTRA_PARAMS, row[3:])):
                         if value != "":
                             params_values[param] = int(value)
                     self.ModulesExtraParams[
@@ -413,7 +409,7 @@ ModulesDatabase = ModulesLibrary(
     os.path.join(USERDATA_DIR, "ethercat_modules"))
 
 
-class RootClass:
+class RootClass(object):
 
     CTNChildrenTypes = [("EthercatNode", _EthercatCTN, "Ethercat Master")]
     EditorType = LibraryEditor
@@ -437,7 +433,7 @@ class RootClass:
         return True
 
     def CTNGenerate_C(self, buildpath, locations):
-        return [], "", False
+        return [], "", False, []
 
     def LoadModulesLibrary(self):
         if self.ModulesLibrary is None:

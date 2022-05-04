@@ -9,11 +9,10 @@
 # See COPYING file for copyrights details.
 
 
-
-from builtins import str as text
 import codecs
-import wx
+from builtins import str as text
 
+import wx
 
 mailbox_protocols = ["AoE", "EoE", "CoE", "FoE", "SoE", "VoE"]
 
@@ -147,7 +146,7 @@ returnVal =result
 # --------------------------------------------------
 #    Common Method For EtherCAT Management
 # --------------------------------------------------
-class _CommonSlave:
+class _CommonSlave(object):
 
     # ----- Data Structure for ethercat management ----
     SlaveState = ""
@@ -518,7 +517,7 @@ class _CommonSlave:
             #  vendor ID; by default, pre-defined value in self.ModulesLibrary
             #             if device type in 'vendor' item equals to actual slave device type, set 'vendor_id' to vendor ID.
             for vendor_id, vendor in self.Controler.CTNParent.CTNParent.ModulesLibrary.Library.items():
-                for available_device in vendor["groups"][vendor["groups"].keys()[0]]["devices"]:
+                for available_device in vendor["groups"][list(vendor["groups"].keys())[0]]["devices"]:
                     if available_device[0] == type_infos["device_type"]:
                         smartview_infos["vendor_id"] = "0x" + "{:0>8x}".format(vendor_id)
 
@@ -709,7 +708,7 @@ class _CommonSlave:
             # get VendorID for EEPROM offset 0x0010-0x0013;
             data = ""
             for vendor_id, vendor in self.Controler.CTNParent.CTNParent.ModulesLibrary.Library.items():
-                for available_device in vendor["groups"][vendor["groups"].keys()[0]]["devices"]:
+                for available_device in vendor["groups"][list(vendor["groups"].keys())[0]]["devices"]:
                     if available_device[0] == type_infos["device_type"]:
                         data = "{:0>8x}".format(vendor_id)
             eeprom += self.GenerateEEPROMList(data, 1, 8)

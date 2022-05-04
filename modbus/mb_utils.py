@@ -24,8 +24,6 @@
 
 
 
-
-
 # dictionary implementing:
 # key   - string with the description we want in the request plugin GUI
 # tuple - (modbus function number, request type, max count value,
@@ -48,7 +46,7 @@ def GetCTVal(child, index):
 
 # Configuration tree value acces helper, for multiple values
 def GetCTVals(child, indexes):
-    return map(lambda index: GetCTVal(child, index), indexes)
+    return list(map(lambda index: GetCTVal(child, index), indexes))
 
 
 def GetTCPServerNodePrinted(self, child):

@@ -27,7 +27,6 @@ import wx
 import wx.lib.agw.customtreectrl as CT
 
 from util.BitmapLibrary import GetBitmap
-import wxpatch
 
 # Customize CustomTreeItem for adding icon on item left
 CT.GenericTreeItem._ExtraImage = None
@@ -55,7 +54,7 @@ CT.GenericTreeItem.GetCurrentCheckedImage = GetCurrentCheckedImage
 class CustomTree(CT.CustomTreeCtrl):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        CT.CustomTreeCtrl.__init__(self, *args, **kwargs)
 
         self.BackgroundBitmap = None
         self.BackgroundAlign = wx.ALIGN_LEFT | wx.ALIGN_TOP
@@ -93,7 +92,7 @@ class CustomTree(CT.CustomTreeCtrl):
     def Enable(self, enabled):
         self.Enabled = enabled
 
-    def GetBitmapRect(self) -> wx.Rect:
+    def GetBitmapRect(self):
         client_size = self.GetClientSize()
         bitmap_size = self.BackgroundBitmap.GetSize()
 
@@ -111,7 +110,7 @@ class CustomTree(CT.CustomTreeCtrl):
         else:
             y = 0
 
-        return wxpatch.Rect(x, y, bitmap_size[0], bitmap_size[1])
+        return wx.Rect(x, y, bitmap_size[0], bitmap_size[1])
 
     def OnLeftUp(self, event):
         if self.Enabled:

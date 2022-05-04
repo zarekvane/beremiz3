@@ -23,11 +23,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
 import wx
 import wx.grid
-
-from dialogs.BrowseLocationsDialog import BrowseLocationsDialog
 
 
 class LocationCellControl(wx.Control):
@@ -37,7 +34,7 @@ class LocationCellControl(wx.Control):
     the BrowseLocationsDialog.
     '''
     def __init__(self, parent):
-        super().__init__(parent)
+        wx.Control.__init__(self, parent)
 
         main_sizer = wx.FlexGridSizer(cols=2, hgap=0, rows=1, vgap=0)
         main_sizer.AddGrowableCol(0)
@@ -91,6 +88,7 @@ class LocationCellControl(wx.Control):
         self.Layout()
 
     def OnBrowseButtonClick(self, event):
+        from dialogs.BrowseLocationsDialog import BrowseLocationsDialog
         # pop up the location browser dialog
         dialog = BrowseLocationsDialog(self, self.VarType, self.Controller)
         if dialog.ShowModal() == wx.ID_OK:
@@ -156,7 +154,7 @@ class LocationCellEditor(wx.grid.GridCellEditor):
     Grid cell editor that uses LocationCellControl to display a browse button.
     '''
     def __init__(self, table, controller):
-        super().__init__()
+        wx.grid.GridCellEditor.__init__(self)
 
         self.Table = table
         self.Controller = controller
@@ -212,8 +210,11 @@ class LocationCellEditor(wx.grid.GridCellEditor):
 
     def SetSize(self, rect):
         self.CellControl.SetSize(rect.x + 1, rect.y,
-                                       rect.width, rect.height,
-                                       wx.SIZE_ALLOW_MINUS_ONE)
+                                 rect.width, rect.height,
+                                 wx.SIZE_ALLOW_MINUS_ONE)
+
+    def ApplyEdit(self, row, col, grid):
+        pass
 
     def Clone(self):
         return LocationCellEditor(self.Table, self.Controller)

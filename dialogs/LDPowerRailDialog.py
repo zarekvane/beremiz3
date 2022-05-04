@@ -24,11 +24,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+# 
 import wx
 
+from dialogs.BlockPreviewDialog import BlockPreviewDialog
 from graphics.GraphicCommons import LEFTRAIL, RIGHTRAIL
 from graphics.LD_Objects import LD_PowerRail
-from dialogs.BlockPreviewDialog import BlockPreviewDialog
+
 
 # -------------------------------------------------------------------------------
 #                    Set Ladder Power Rail Parameters Dialog
@@ -40,7 +42,6 @@ class LDPowerRailDialog(BlockPreviewDialog):
     Class that implements a dialog for defining parameters of a power rail graphic
     element
     """
-
     def __init__(self, parent, controller, tagname):
         """
         Constructor
@@ -48,8 +49,8 @@ class LDPowerRailDialog(BlockPreviewDialog):
         @param controller: Reference to project controller
         @param tagname: Tagname of project POU edited
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Power Rail Properties'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Power Rail Properties'))
 
         # Init common sizers
         self._init_sizers(2, 0, 5, None, 2, 1)

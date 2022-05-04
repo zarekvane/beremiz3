@@ -10,7 +10,6 @@
 # See COPYING file for copyrights details.
 
 
-
 import os
 
 from etherlab.EthercatSlave import ExtractHexDecValue, DATATYPECONVERSION, ExtractName
@@ -130,18 +129,16 @@ def ConfigureVariable(entry_infos, str_completion):
 
 
 def ExclusionSortFunction(x, y):
-    cmp = lambda a, b: (a > b) - (a < b)
-    
     if x["matching"] == y["matching"]:
         if x["assigned"] and not y["assigned"]:
             return -1
         elif not x["assigned"] and y["assigned"]:
             return 1
-        return cmp(x["count"], y["count"])
-    return -cmp(x["matching"], y["matching"])
+        return operator.eq(x["count"], y["count"])
+    return -operator.eq(x["matching"], y["matching"])
 
 
-class _EthercatCFileGenerator:
+class _EthercatCFileGenerator(object):
 
     def __init__(self, controler):
         self.Controler = controler
@@ -201,12 +198,12 @@ class _EthercatCFileGenerator:
         }
 
         # Initialize variable storing variable mapping state
-        for slave_entries in self.UsedVariables.values():
-            for entry_infos in slave_entries.values():
+        for slave_entries in list(self.UsedVariables.values()):
+            for entry_infos in list(slave_entries.values()):
                 entry_infos["mapped"] = False
 
         # Sort slaves by position (IEC_Channel)
-        self.Slaves.sort()
+        sorted(self.Slaves)
         # Initialize dictionary storing alias auto-increment position values
         alias = {}
 
@@ -237,7 +234,7 @@ class _EthercatCFileGenerator:
             # Adding code for declaring slave in master code template strings
             for element in ["vendor", "product_code", "revision_number"]:
                 type_infos[element] = ExtractHexDecValue(type_infos[element])
-            type_infos.update(dict(zip(["slave", "alias", "position"], (slave_idx,) + slave_pos)))
+            type_infos.update(dict(list(zip(["slave", "alias", "position"], (slave_idx,) + slave_pos))))
 
             # Extract slave device CoE informations
             device_coe = device.getCoE()
@@ -327,7 +324,7 @@ class _EthercatCFileGenerator:
                         exclusion_list = [pdo_index]
                         for excluded in excluded_list:
                             exclusion_list.append(ExtractHexDecValue(excluded.getcontent()))
-                        exclusion_list.sort()
+                        sorted(exclusion_list)
 
                         exclusion_scope = exclusive_pdos.setdefault(tuple(exclusion_list), [])
 
@@ -355,7 +352,7 @@ class _EthercatCFileGenerator:
                         selected_pdos.append(pdo_index)
 
                 excluded_pdos = []
-                for exclusion_scope in exclusive_pdos.values():
+                for exclusion_scope in list(exclusive_pdos.values()):
                     exclusion_scope.sort(ExclusionSortFunction)
                     start_excluding_index = 0
                     if exclusion_scope[0]["matching"] > 0:
@@ -394,8 +391,9 @@ class _EthercatCFileGenerator:
                         if entry_declaration is not None and not entry_declaration["mapped"]:
                             pdo_needed = True
 
-                            entry_infos.update(dict(zip(["var_type", "dir", "var_name", "no_decl", "extra_declarations"],
-                                                        entry_declaration["infos"])))
+                            entry_infos.update(
+                                dict(list(zip(["var_type", "dir", "var_name", "no_decl", "extra_declarations"],
+                                              entry_declaration["infos"]))))
                             entry_declaration["mapped"] = True
 
                             entry_type = entry.getDataType().getcontent()
@@ -482,8 +480,9 @@ class _EthercatCFileGenerator:
                             }
                             entry_infos.update(type_infos)
 
-                            entry_infos.update(dict(zip(["var_type", "dir", "var_name", "no_decl", "extra_declarations"],
-                                                        entry_declaration["infos"])))
+                            entry_infos.update(
+                                dict(list(zip(["var_type", "dir", "var_name", "no_decl", "extra_declarations"],
+                                              entry_declaration["infos"]))))
                             entry_declaration["mapped"] = True
 
                             if entry_infos["var_type"] != entry["Type"]:
@@ -580,6 +579,6 @@ class _EthercatCFileGenerator:
                         "publish_variables"]:
             str_completion[element] = "\n".join(str_completion[element])
 
-        etherlabfile = open(filepath, 'w')
+        etherlabfile = open(filepath, 'w', encoding='utf-8')
         etherlabfile.write(plc_etherlab_code % str_completion)
         etherlabfile.close()

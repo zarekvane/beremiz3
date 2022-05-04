@@ -3,7 +3,7 @@
 # This file is part of Beremiz.
 # See COPYING file for copyrights details.
 
-
+# 
 from plcopen.XSLTModelQuery import XSLTModelQuery, _StringValue, _BoolValue, _translate_args
 
 # -------------------------------------------------------------------------------
@@ -11,19 +11,19 @@ from plcopen.XSLTModelQuery import XSLTModelQuery, _StringValue, _BoolValue, _tr
 # -------------------------------------------------------------------------------
 
 
-class _VariableInfos:
+class _VariableInfos(object):
     __slots__ = ["Name", "Class", "Option", "Location", "InitialValue",
                  "Edit", "Documentation", "Type", "Tree", "Number"]
 
     def __init__(self, *args):
-        for attr, value in zip(self.__slots__, args):
+        for attr, value in list(zip(self.__slots__, args)):
             setattr(self, attr, value if value is not None else "")
 
     def copy(self):
         return _VariableInfos(*[getattr(self, attr) for attr in self.__slots__])
 
 
-class VariablesInfosFactory:
+class VariablesInfosFactory(object):
     """ Helpers object for generating pou var list """
 
     def __init__(self, variables):
@@ -63,14 +63,16 @@ class VariablesInfosFactory:
 
 class VariableInfoCollector(XSLTModelQuery):
     def __init__(self, controller):
-        super().__init__(controller,
-                         "variables_infos.xslt",
-                         [(name, self.FactoryCaller(name)) for name in [
-                             "SetType",
-                             "AddDimension",
-                             "AddTree",
-                             "AddVarToTree",
-                             "AddVariable"]])
+        XSLTModelQuery.__init__(self,
+                                controller,
+                                "variables_infos.xslt",
+                                [(name, self.FactoryCaller(name))
+                                 for name in [
+                                     "SetType",
+                                     "AddDimension",
+                                     "AddTree",
+                                     "AddVarToTree",
+                                     "AddVariable"]])
 
     def FactoryCaller(self, funcname):
         def CallFactory(*args):

@@ -22,8 +22,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 from functools import reduce
+
 import wx
 
 # -------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class LibraryPanel(wx.Panel):
         @param enable_drag: Flag indicating that function or function block can
         be drag'n drop from LibraryPanel (default: False)
         """
-        super().__init__(parent, style=wx.TAB_TRAVERSAL)
+        wx.Panel.__init__(self, parent, style=wx.TAB_TRAVERSAL)
 
         # Define LibraryPanel main sizer
         main_sizer = wx.FlexGridSizer(cols=1, hgap=0, rows=2, vgap=0)
@@ -173,7 +173,7 @@ class LibraryPanel(wx.Panel):
 
             # Get current selected item for selected it when values refreshed
             selected_item = self.Tree.GetSelection()
-            selected_pydata = (self.Tree.GetPyData(selected_item)
+            selected_pydata = (self.Tree.GetItemData(selected_item)
                                if (selected_item.IsOk() and
                                    selected_item != self.Tree.GetRootItem())
                                else None)
@@ -298,7 +298,7 @@ class LibraryPanel(wx.Panel):
         """
         # Get selected item associated data in tree
         selected_item = self.Tree.GetSelection()
-        selected_pydata = (self.Tree.GetPyData(selected_item)
+        selected_pydata = (self.Tree.GetItemData(selected_item)
                            if (selected_item.IsOk() and
                                selected_item != self.Tree.GetRootItem())
                            else None)
@@ -336,7 +336,7 @@ class LibraryPanel(wx.Panel):
             return None
 
         # Get data associated to item to test
-        item_pydata = self.Tree.GetPyData(item)
+        item_pydata = self.Tree.GetItemData(item)
         if item_pydata is not None and item_pydata["type"] == BLOCK:
             # Only test item corresponding to block
 
@@ -346,12 +346,12 @@ class LibraryPanel(wx.Panel):
             if inputs is not None and type_inputs is not None:
                 same_inputs = reduce(
                     lambda x, y: x and y,
-                    map(
+                    list(map(
                         lambda x: x[0] == x[1] or x[0] == 'ANY' or x[1] == 'ANY',
-                        zip(type_inputs,
-                            (inputs[:type_extension]
+                        list(zip(type_inputs,
+                                 (inputs[:type_extension]
                              if type_extension is not None
-                             else inputs))),
+                                  else inputs))))),
                     True)
             else:
                 same_inputs = True
@@ -402,7 +402,7 @@ class LibraryPanel(wx.Panel):
         while item.IsOk():
 
             # Get item data to get item type
-            item_pydata = self.Tree.GetPyData(item)
+            item_pydata = self.Tree.GetItemData(item)
 
             # Item is a block category
             if (item == root) or item_pydata["type"] == CATEGORY:
@@ -467,7 +467,7 @@ class LibraryPanel(wx.Panel):
         @param event: wx.TreeEvent
         """
         # Update TextCtrl value with block selected usage
-        item_pydata = self.Tree.GetPyData(event.GetItem())
+        item_pydata = self.Tree.GetItemData(event.GetItem())
         self.Comment.SetValue(
             item_pydata["comment"]
             if item_pydata is not None and item_pydata["type"] == BLOCK
@@ -485,7 +485,7 @@ class LibraryPanel(wx.Panel):
         @param event: wx.TreeEvent
         """
         selected_item = event.GetItem()
-        item_pydata = self.Tree.GetPyData(selected_item)
+        item_pydata = self.Tree.GetItemData(selected_item)
 
         # Item dragged is a block
         if item_pydata is not None and item_pydata["type"] == BLOCK:

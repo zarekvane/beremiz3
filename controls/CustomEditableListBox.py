@@ -25,14 +25,15 @@
 
 import wx
 import wx.adv
+import wx.gizmos
 
 
 class CustomEditableListBox(wx.adv.EditableListBox):
 
     def __init__(self, *args, **kwargs):
-        super().EditableListBox.__init__(*args, **kwargs)
+        wx.adv.EditableListBox.__init__(self, *args, **kwargs)
 
-        listbox: wx.ListCtrl = self.GetListCtrl()
+        listbox = self.GetListCtrl()
         listbox.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         listbox.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnLabelBeginEdit)
         listbox.Bind(wx.EVT_LIST_END_LABEL_EDIT, self.OnLabelEndEdit)
@@ -44,13 +45,12 @@ class CustomEditableListBox(wx.adv.EditableListBox):
                 (self.GetUpButton(), _("Move up"), "_OnUpButton"),
                 (self.GetDownButton(), _("Move down"), "_OnDownButton")]:
             button.SetToolTip(tooltip)
-            button.Bind(wx.EVT_BUTTON,
-                        self.GetButtonPressedFunction(call_function))
+            button.Bind(wx.EVT_BUTTON, self.GetButtonPressedFunction(call_function))
 
         self.Editing = False
 
     def EnsureCurrentItemVisible(self):
-        listctrl: wx.ListCtrl = self.GetListCtrl()
+        listctrl = self.GetListCtrl()
         listctrl.EnsureVisible(listctrl.GetFocusedItem())
 
     def OnLabelBeginEdit(self, event):
@@ -95,7 +95,6 @@ class CustomEditableListBox(wx.adv.EditableListBox):
         elif keycode == wx.WXK_SPACE:
             button = self.GetEditButton()
         if button is not None and button.IsEnabled():
-            button.ProcessEvent(
-                wx.CommandEvent(wx.EVT_BUTTON.typeId, button.GetId()))
+            button.ProcessEvent(wx.CommandEvent(wx.EVT_BUTTON.typeId, button.GetId()))
         else:
             event.Skip()

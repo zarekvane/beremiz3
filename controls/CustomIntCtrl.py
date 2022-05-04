@@ -29,7 +29,7 @@ import wx.lib.intctrl
 
 class CustomIntUpdatedEvent(wx.PyCommandEvent):
     def __init__(self, id, value=0, object=None):
-        super().__init__(CustomIntCtrl.wxEVT_COMMAND_CUSTOM_INT_UPDATED, id)
+        wx.PyCommandEvent.__init__(self, CustomIntCtrl.wxEVT_COMMAND_CUSTOM_INT_UPDATED, id)
 
         self.__value = value
         self.SetEventObject(object)
@@ -58,7 +58,7 @@ class CustomIntCtrl(wx.lib.intctrl.IntCtrl):
     EVT_CUSTOM_INT = wx.PyEventBinder(wxEVT_COMMAND_CUSTOM_INT_UPDATED, 1)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        wx.lib.intctrl.IntCtrl.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_KILL_FOCUS, self.UpdateValue)
         self.SetLongAllowed(True)
         self.SetLimited(False)

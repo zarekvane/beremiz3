@@ -24,12 +24,13 @@
 
 
 
+
 from threading import Lock, Timer
 from time import time as gettime
 
 import wx
 
-REFRESH_PERIOD = 0.1         # Minimum time between 2 refresh
+REFRESH_PERIOD = 0.5  # Minimum time between 2 refresh
 DEBUG_REFRESH_LOCK = Lock()  # Common refresh lock for all debug viewers
 
 # -------------------------------------------------------------------------------
@@ -37,7 +38,7 @@ DEBUG_REFRESH_LOCK = Lock()  # Common refresh lock for all debug viewers
 # -------------------------------------------------------------------------------
 
 
-class DebugViewer:
+class DebugViewer(object):
     """
     Class that implements common behavior of every viewers able to display debug
     values

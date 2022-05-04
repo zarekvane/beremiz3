@@ -30,10 +30,9 @@
 This module contains classes extended from wx.Dialog used by the GUI.
 """
 
-
 import os
-import wx
 from wx.lib.agw.hyperlink import HyperLinkCtrl
+import wx
 
 
 class AboutDialog(wx.Dialog):
@@ -41,19 +40,19 @@ class AboutDialog(wx.Dialog):
     A replacement About Dialog for Windows, as it uses a generic frame that
     well...sucks.
     """
-
     def __init__(self, parent, info):
         title = _("About") + " " + info.Name
-        super().__init__(parent, title=title)
+        wx.Dialog.__init__(self, parent, title=title)
         self.info = info
 
         if parent and parent.GetIcon():
             self.SetIcon(parent.GetIcon())
 
         image = None
-        if self.info.Icon:
-            bitmap = wx.BitmapFromIcon(self.info.Icon)
-            image = wx.StaticBitmap(self, bitmap=bitmap)
+        if self.info.IconPath:
+            img = wx.Image(self.info.IconPath, wx.BITMAP_TYPE_PNG)
+            temp = img.ConvertToBitmap()
+            image = wx.StaticBitmap(self, bitmap=temp)
 
         name = wx.StaticText(self, label="%s %s" % (info.Name, info.Version))
         description = wx.StaticText(self, label=info.Description)
@@ -106,8 +105,8 @@ class AboutDialog(wx.Dialog):
 
 class CreditsDialog(wx.Dialog):
     def __init__(self, parent, info):
-        super().__init__(parent, title=_("Credits"), size=(475, 320),
-                         style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, parent, title=_("Credits"), size=(475, 320),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
         if parent and parent.GetIcon():
             self.SetIcon(parent.GetIcon())
@@ -117,10 +116,8 @@ class CreditsDialog(wx.Dialog):
         close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
         close.SetDefault()
 
-        developer = wx.TextCtrl(
-            notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
-        translators = wx.TextCtrl(
-            notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
+        developer = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
+        translators = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
 
         developer.SetValue(u'\n'.join(info.Developers))
         translators.SetValue(u'\n'.join(info.Translators))
@@ -133,8 +130,7 @@ class CreditsDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(notebook, 1, wx.EXPAND | wx.ALL, 10)
-        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT |
-                  wx.RIGHT | wx.BOTTOM, border=10)
+        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
@@ -145,8 +141,8 @@ class CreditsDialog(wx.Dialog):
 
 class LicenseDialog(wx.Dialog):
     def __init__(self, parent, info):
-        super().__init__(parent, title=_("License"), size=(500, 400),
-                         style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, parent, title=_("License"), size=(500, 400),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
         if parent and parent.GetIcon():
             self.SetIcon(parent.GetIcon())
@@ -162,8 +158,7 @@ class LicenseDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 10)
-        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT |
-                  wx.RIGHT | wx.BOTTOM, border=10)
+        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
@@ -173,7 +168,7 @@ class LicenseDialog(wx.Dialog):
 
 
 def ShowAboutDialog(parent, info):
-    if os.name == "nt":
+    #if os.name == "nt":
         AboutDialog(parent, info)
-    else:
-        wx.AboutBox(info)
+    #else:
+    #    wx.AboutBox(info)

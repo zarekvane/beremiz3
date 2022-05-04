@@ -23,12 +23,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 import wx
 
-from graphics.GraphicCommons import INPUT, INOUT, OUTPUT
-from graphics.FBD_Objects import FBD_Variable
 from dialogs.BlockPreviewDialog import BlockPreviewDialog
+from graphics.FBD_Objects import FBD_Variable
+from graphics.GraphicCommons import INPUT, INOUT, OUTPUT
+
 
 # -------------------------------------------------------------------------------
 #                                    Helpers
@@ -54,8 +54,8 @@ class FBDVariableDialog(BlockPreviewDialog):
         @param tagname: Tagname of project POU edited
         @param exclude_input: Exclude input from variable class selection
         """
-        super().__init__(parent, controller, tagname,
-                         title=_('Variable Properties'))
+        BlockPreviewDialog.__init__(self, parent, controller, tagname,
+                                    title=_('Variable Properties'))
 
         # Dictionaries containing correspondence between variable block class and string
         # to be shown in Class combo box in both sense
@@ -94,7 +94,7 @@ class FBDVariableDialog(BlockPreviewDialog):
         # Create label for variable expression
         name_label = wx.StaticText(self, label=_('Expression:'))
         self.RightGridSizer.Add(name_label, border=5,
-                                      flag=wx.GROW | wx.BOTTOM)
+                                flag=wx.GROW | wx.BOTTOM)
 
         # Create text control for defining variable expression
         self.Expression = wx.TextCtrl(self)
@@ -106,14 +106,13 @@ class FBDVariableDialog(BlockPreviewDialog):
         self.VariableName = wx.ListBox(self, size=wx.Size(-1, 120),
                                        style=wx.LB_SINGLE | wx.LB_SORT)
         self.Bind(wx.EVT_LISTBOX, self.OnNameChanged, self.VariableName)
-        self.RightGridSizer.Add(
-            self.VariableName, border=4, flag=wx.GROW | wx.TOP)
+        self.RightGridSizer.Add(self.VariableName, border=4, flag=wx.GROW | wx.TOP)
 
         # Add preview panel and associated label to sizers
         self.MainSizer.Add(self.PreviewLabel, border=20,
-                                 flag=wx.GROW | wx.LEFT | wx.RIGHT)
+                           flag=wx.GROW | wx.LEFT | wx.RIGHT)
         self.MainSizer.Add(self.Preview, border=20,
-                                 flag=wx.GROW | wx.LEFT | wx.RIGHT)
+                           flag=wx.GROW | wx.LEFT | wx.RIGHT)
 
         # Add buttons sizer to sizers
         self.MainSizer.Add(
@@ -174,8 +173,7 @@ class FBDVariableDialog(BlockPreviewDialog):
         var_class = values.get("class", None)
         if var_class is not None:
             # Set class selected in class combo box
-            self.Class.SetStringSelection(
-                self.VARIABLE_CLASSES_DICT[var_class])
+            self.Class.SetStringSelection(self.VARIABLE_CLASSES_DICT[var_class])
             # Refresh names in name list box according to var class
             self.RefreshNameList()
 
@@ -197,7 +195,7 @@ class FBDVariableDialog(BlockPreviewDialog):
                 self.ExecutionOrder.SetValue(value)
 
         # Refresh preview panel
-        self.RefreshPreview()
+        self.Refresh()
         self.Fit()
 
     def GetValues(self):
@@ -226,8 +224,7 @@ class FBDVariableDialog(BlockPreviewDialog):
         # Test that an expression have been selected or typed by user
         value = self.Expression.GetValue()
         if value == "":
-            message = _(
-                "At least a variable or an expression must be selected!")
+            message = _("At least a variable or an expression must be selected!")
 
         # Show error message if an error is detected
         if message is not None:
@@ -245,7 +242,7 @@ class FBDVariableDialog(BlockPreviewDialog):
         # Refresh name list box values
         self.RefreshNameList()
 
-        self.RefreshPreview()
+        self.Refresh()
         event.Skip()
 
     def OnNameChanged(self, event):
@@ -258,7 +255,7 @@ class FBDVariableDialog(BlockPreviewDialog):
         if self.VariableName.GetSelection() != wx.NOT_FOUND:
             self.Expression.ChangeValue(self.VariableName.GetStringSelection())
 
-        self.RefreshPreview()
+        self.Refresh()
         event.Skip()
 
     def OnExpressionChanged(self, event):
@@ -270,7 +267,7 @@ class FBDVariableDialog(BlockPreviewDialog):
         self.VariableName.SetSelection(
             self.VariableName.FindString(self.Expression.GetValue()))
 
-        self.RefreshPreview()
+        self.Refresh()
         event.Skip()
 
     def OnExecutionOrderChanged(self, event):
@@ -278,10 +275,10 @@ class FBDVariableDialog(BlockPreviewDialog):
         Called when block execution control value changed
         @param event: wx.SpinEvent
         """
-        self.RefreshPreview()
+        self.Refresh()
         event.Skip()
 
-    def RefreshPreview(self):
+    def DrawPreview(self):
         """
         Refresh preview panel of graphic element
         Override BlockPreviewDialog function
@@ -292,11 +289,10 @@ class FBDVariableDialog(BlockPreviewDialog):
         # Set graphic element displayed, creating a FBD variable element
         self.Element = FBD_Variable(
             self.Preview,
-            self.VARIABLE_CLASSES_DICT_REVERSE[self.Class.GetStringSelection(
-            )],
+            self.VARIABLE_CLASSES_DICT_REVERSE[self.Class.GetStringSelection()],
             name,
             self.VariableList.get(name, ("", ""))[1],
             executionOrder=self.ExecutionOrder.GetValue())
 
         # Call BlockPreviewDialog function
-        BlockPreviewDialog.RefreshPreview(self)
+        BlockPreviewDialog.DrawPreview(self)
