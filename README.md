@@ -17,6 +17,6 @@ this project is forked from the editor part of [OpenPLC_Editror](https://github.
 
 # run this program
 
-```python
+```bash
 python -B Beremiz.py
 ```
